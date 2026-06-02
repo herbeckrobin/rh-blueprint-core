@@ -115,6 +115,7 @@ check('Environment: isDevelopment false', \RhBlueprint\Core\Environment::isDevel
 // --- 5. Settings-Hub + Core-Features ----------------------------------------
 $settings = rh_blueprint()->settings();
 check('settings() liefert SettingsHub', $settings instanceof \RhBlueprint\Core\Settings\SettingsHub);
+check('storage() liefert Storage', rh_blueprint()->storage() instanceof \RhBlueprint\Core\Storage);
 
 // Der Core registriert beim Boot bereits den Support-Tab (Prio 10) + Support-Group.
 check('Support-Tab ist als Core-Feature vorhanden', isset($settings->tabs()['support']));

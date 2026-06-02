@@ -29,12 +29,15 @@ final class Core
 
     private SettingsHub $settings;
 
+    private Storage $storage;
+
     private function __construct(
         private readonly string $version,
         private readonly string $dir,
     ) {
         $this->services = new ServiceRegistry();
         $this->settings = new SettingsHub();
+        $this->storage = new Storage();
     }
 
     /**
@@ -106,6 +109,11 @@ final class Core
     public function settings(): SettingsHub
     {
         return $this->settings;
+    }
+
+    public function storage(): Storage
+    {
+        return $this->storage;
     }
 
     public function version(): string
