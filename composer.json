@@ -1,0 +1,23 @@
+{
+    "name": "rh/blueprint-core",
+    "description": "Geteilter Core fuer die rh-blueprint Plugin-Kollektion: Service-Registry, Settings-Framework, Shared Admin-UI, Environment-Helper.",
+    "type": "library",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "Robin Herbeck",
+            "homepage": "https://robinherbeck.de"
+        }
+    ],
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "files": [
+            "rh-blueprint-core.php"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}
