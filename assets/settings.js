@@ -1,94 +1,3 @@
-(function () {
-    'use strict';
-
-    const wrap = document.querySelector('.rhbp-settings');
-    if (!wrap) {
-        return;
-    }
-
-    const searchInput = wrap.querySelector('#rhbp-search-input');
-    const tabs = Array.from(wrap.querySelectorAll('.rhbp-tabs .nav-tab'));
-    const panels = Array.from(wrap.querySelectorAll('.rhbp-tab-panel'));
-    const activeTab = wrap.dataset.activeTab || (tabs[0] && tabs[0].dataset.tab);
-
-    function showPanel(tabId) {
-        panels.forEach((panel) => {
-            panel.hidden = panel.dataset.tabPanel !== tabId;
-        });
-        tabs.forEach((tab) => {
-            tab.classList.toggle('nav-tab-active', tab.dataset.tab === tabId);
-        });
-        wrap.dataset.activeTab = tabId;
-    }
-
-    // Die Tabs sind echte Links (admin.php?page=...&tab=...). Wir fangen den Klick
-    // bewusst NICHT ab: so ist jeder Tab-Wechsel eine echte Navigation, und WordPress 7
-    // legt seinen nativen View-Transition-Übergang automatisch darüber, exakt wie beim
-    // Menü links. Die Panel-Sichtbarkeit setzt der Server (render()) anhand von ?tab=.
-    // showPanel() bleibt nur für die Live-Suche (sie blendet Panels temporär ein/aus).
-
-    if (searchInput) {
-        const rows = Array.from(wrap.querySelectorAll('.form-table tr'));
-
-        searchInput.addEventListener('input', () => {
-            const term = searchInput.value.trim().toLowerCase();
-            const searching = term.length > 0;
-
-            wrap.classList.toggle('is-searching', searching);
-
-            if (!searching) {
-                rows.forEach((row) => {
-                    row.hidden = false;
-                });
-                showPanel(wrap.dataset.activeTab || activeTab);
-                return;
-            }
-
-            panels.forEach((panel) => {
-                panel.hidden = false;
-            });
-
-            let visibleCount = 0;
-
-            rows.forEach((row) => {
-                const field = row.querySelector('.rhbp-field');
-                const index = field ? (field.dataset.searchIndex || '') : (row.textContent || '').toLowerCase();
-                const match = index.indexOf(term) !== -1;
-                row.hidden = !match;
-                if (match) {
-                    visibleCount += 1;
-                }
-            });
-
-            panels.forEach((panel) => {
-                const visibleRows = panel.querySelectorAll('.form-table tr:not([hidden])');
-                const emptyMarker = panel.querySelector('.rhbp-no-results');
-
-                if (visibleRows.length === 0) {
-                    panel.hidden = true;
-                } else if (emptyMarker) {
-                    emptyMarker.remove();
-                }
-            });
-
-            if (visibleCount === 0) {
-                let banner = wrap.querySelector('.rhbp-no-results-global');
-                if (!banner) {
-                    banner = document.createElement('p');
-                    banner.className = 'rhbp-no-results rhbp-no-results-global';
-                    banner.textContent = 'Keine Treffer.';
-                    wrap.querySelector('.rhbp-form').prepend(banner);
-                }
-            } else {
-                const banner = wrap.querySelector('.rhbp-no-results-global');
-                if (banner) {
-                    banner.remove();
-                }
-            }
-        });
-    }
-}());
-
 /* =========================================
    Sync Modal Controller, Premium UX
    ========================================= */
@@ -127,59 +36,34 @@
         import: 'Daten einspielen',
     };
 
-    // ---- Profile Section: Presets + Live-Sync ----
+    // ---- Profil-Form: Schnellwahl-Presets ----
+    // Das Profil-Form lebt im Einstellungen-Modal des Peers. Die is-checked-Optik
+    // der Optionen uebernimmt der generische Option-Toggle (siehe UI-Mechanik unten),
+    // hier wird nur die Schnellwahl verdrahtet.
 
-    function setupProfileSection(card) {
-        const form = card.querySelector('[data-profile-form]');
-        if (!form) {
-            return;
-        }
+    const PROFILE_PRESETS = {
+        all: { content: true, taxonomies: true, comments: true, users: true, options: true, links: true, customTables: true, uploads: true },
+        'no-users': { content: true, taxonomies: true, comments: true, users: false, options: true, links: true, customTables: true, uploads: true },
+        'content-only': { content: true, taxonomies: true, comments: false, users: false, options: false, links: false, customTables: false, uploads: true },
+        'db-only': { content: true, taxonomies: true, comments: true, users: true, options: true, links: true, customTables: true, uploads: false },
+    };
 
+    function setupProfileForm(form) {
         const checkboxes = Array.from(form.querySelectorAll('input[type="checkbox"][data-profile-flag]'));
-        const presetButtons = card.querySelectorAll('[data-preset]');
-        const pill = card.querySelector('.rhbp-profile-pill');
-        const saveButton = form.querySelector('.rhbp-profile-save');
 
-        function updateChecked() {
-            checkboxes.forEach((cb) => {
-                cb.closest('.rhbp-profile-item').classList.toggle('is-checked', cb.checked);
-            });
-            updatePill();
-        }
-
-        function updatePill() {
-            if (!pill) return;
-            const count = checkboxes.filter((cb) => cb.checked).length;
-            const total = checkboxes.length;
-            pill.classList.toggle('rhbp-profile-pill--full', count === total);
-            pill.classList.toggle('rhbp-profile-pill--partial', count !== total);
-            pill.textContent = count === total ? 'Voll' : count + ' von ' + total + ' aktiv';
-        }
-
-        checkboxes.forEach((cb) => cb.addEventListener('change', updateChecked));
-
-        presetButtons.forEach((btn) => {
+        form.querySelectorAll('[data-preset]').forEach((btn) => {
             btn.addEventListener('click', () => {
-                const preset = btn.dataset.preset;
-                const presets = {
-                    all: { content: true, taxonomies: true, comments: true, users: true, options: true, links: true, customTables: true, uploads: true },
-                    'no-users': { content: true, taxonomies: true, comments: true, users: false, options: true, links: true, customTables: true, uploads: true },
-                    'content-only': { content: true, taxonomies: true, comments: false, users: false, options: false, links: false, customTables: false, uploads: true },
-                    'db-only': { content: true, taxonomies: true, comments: true, users: true, options: true, links: true, customTables: true, uploads: false },
-                };
-                const cfg = presets[preset];
+                const cfg = PROFILE_PRESETS[btn.dataset.preset];
                 if (!cfg) return;
                 checkboxes.forEach((cb) => {
                     cb.checked = !!cfg[cb.dataset.profileFlag];
+                    const option = cb.closest('.rhbp-option');
+                    if (option) {
+                        option.classList.toggle('is-checked', cb.checked);
+                    }
                 });
-                updateChecked();
-                if (saveButton) {
-                    saveButton.classList.remove('is-saved');
-                }
             });
         });
-
-        updateChecked();
     }
 
     // ---- Modal Logic ----
@@ -199,16 +83,16 @@
     function setIcon(variant, dashicon) {
         const iconWrap = modal.querySelector('[data-modal-icon]');
         if (!iconWrap) return;
-        iconWrap.classList.remove('rhbp-sync-modal__icon--success', 'rhbp-sync-modal__icon--error');
-        if (variant === 'success') iconWrap.classList.add('rhbp-sync-modal__icon--success');
-        if (variant === 'error') iconWrap.classList.add('rhbp-sync-modal__icon--error');
+        iconWrap.classList.remove('rhbp-modal__head-icon--ok', 'rhbp-modal__head-icon--err');
+        if (variant === 'success') iconWrap.classList.add('rhbp-modal__head-icon--ok');
+        if (variant === 'error') iconWrap.classList.add('rhbp-modal__head-icon--err');
         iconWrap.innerHTML = '<span class="dashicons dashicons-' + dashicon + '" aria-hidden="true"></span>';
     }
 
     function setFooterButtons(visible) {
         ['cancel', 'confirm', 'retry', 'finish', 'login'].forEach((key) => {
             const sel = key === 'cancel' ? '[data-modal-close]' : '[data-modal-' + key + ']';
-            const buttons = modal.querySelectorAll('.rhbp-sync-modal__footer ' + sel);
+            const buttons = modal.querySelectorAll('.rhbp-modal__foot ' + sel);
             buttons.forEach((b) => {
                 b.hidden = !visible.includes(key);
             });
@@ -659,15 +543,16 @@
 
     // ---- Bindings ----
 
-    // Card-Actions hijacken
-    root.querySelectorAll('.rhbp-peer-card').forEach((card) => {
-        setupProfileSection(card);
+    // Profil-Forms (im jeweiligen Einstellungen-Modal) verdrahten
+    root.querySelectorAll('[data-profile-form]').forEach(setupProfileForm);
 
+    // Card-Actions hijacken: Pull/Push oeffnen das Progress-Modal statt admin-post
+    root.querySelectorAll('[data-peer-id]').forEach((card) => {
         const peerId = card.dataset.peerId;
         const peerName = card.dataset.peerName;
 
         ['pull', 'push'].forEach((action) => {
-            const form = card.querySelector('.rhbp-peer-card__action-form[data-action="' + action + '"]');
+            const form = card.querySelector('.rhbp-peer-action[data-action="' + action + '"]');
             if (!form) return;
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -716,6 +601,105 @@
             const inProgress = !modal.querySelector('[data-state="progress"]').hidden;
             const inStandalone = !modal.querySelector('[data-state="standalone"]').hidden;
             if (!inProgress && !inStandalone) closeModal();
+        }
+    });
+}());
+
+/* =========================================
+   Generische UI-Mechanik, von allen Modulen geteilt.
+   Data-Attribut-gesteuert, kein modul-spezifischer Code:
+     [data-rhbp-modal-open="ID"]  oeffnet  #ID (.rhbp-modal-backdrop)
+     [data-rhbp-modal-close]      schliesst das umgebende Modal
+     Backdrop-Klick + ESC         schliessen ebenfalls
+     [data-rhbp-subtab="KEY"]     schaltet auf [data-rhbp-pane="KEY"] im selben Modal
+     .rhbp-option input           toggelt .is-checked auf der Kachel
+     [data-rhbp-copy="SEL"]       kopiert den Text aus SEL in die Zwischenablage
+   ========================================= */
+(function () {
+    'use strict';
+
+    const settings = document.querySelector('.rhbp-settings');
+    if (!settings) {
+        return;
+    }
+
+    function openBackdrop(backdrop) {
+        if (!backdrop) return;
+        backdrop.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeBackdrop(backdrop) {
+        if (!backdrop) return;
+        backdrop.classList.remove('is-open');
+        if (!document.querySelector('.rhbp-modal-backdrop.is-open')) {
+            document.body.style.overflow = '';
+        }
+    }
+
+    document.addEventListener('click', (e) => {
+        // Oeffnen
+        const opener = e.target.closest('[data-rhbp-modal-open]');
+        if (opener) {
+            e.preventDefault();
+            openBackdrop(document.getElementById(opener.dataset.rhbpModalOpen));
+            return;
+        }
+
+        // Schliessen ueber Button
+        const closer = e.target.closest('[data-rhbp-modal-close]');
+        if (closer) {
+            e.preventDefault();
+            closeBackdrop(closer.closest('.rhbp-modal-backdrop'));
+            return;
+        }
+
+        // Schliessen ueber Backdrop-Klick (nur direkt auf den Hintergrund)
+        if (e.target.classList && e.target.classList.contains('rhbp-modal-backdrop')) {
+            closeBackdrop(e.target);
+            return;
+        }
+
+        // Sub-Tabs im Modal
+        const subtab = e.target.closest('[data-rhbp-subtab]');
+        if (subtab) {
+            const modal = subtab.closest('.rhbp-modal');
+            if (modal) {
+                const key = subtab.dataset.rhbpSubtab;
+                modal.querySelectorAll('[data-rhbp-subtab]').forEach((t) => t.classList.toggle('is-active', t === subtab));
+                modal.querySelectorAll('[data-rhbp-pane]').forEach((p) => p.classList.toggle('is-active', p.dataset.rhbpPane === key));
+            }
+            return;
+        }
+
+        // Copy-Button
+        const copyBtn = e.target.closest('[data-rhbp-copy]');
+        if (copyBtn) {
+            e.preventDefault();
+            const target = document.querySelector(copyBtn.dataset.rhbpCopy);
+            if (target && navigator.clipboard) {
+                navigator.clipboard.writeText(target.textContent.trim()).then(() => {
+                    copyBtn.classList.add('is-copied');
+                    setTimeout(() => copyBtn.classList.remove('is-copied'), 1500);
+                }).catch(() => {});
+            }
+            return;
+        }
+    });
+
+    // ESC schliesst das oberste offene Modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const open = Array.from(document.querySelectorAll('.rhbp-modal-backdrop.is-open')).pop();
+        if (open) closeBackdrop(open);
+    });
+
+    // Option-Kacheln: is-checked spiegeln
+    settings.addEventListener('change', (e) => {
+        const input = e.target;
+        if (input.matches && input.matches('.rhbp-option input[type="checkbox"]')) {
+            const option = input.closest('.rhbp-option');
+            if (option) option.classList.toggle('is-checked', input.checked);
         }
     });
 }());

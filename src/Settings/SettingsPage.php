@@ -133,11 +133,15 @@ final class SettingsPage
             $activeTab = (string) array_key_first($tabs);
         }
 
-        echo '<div class="wrap rhbp-settings" data-active-tab="' . esc_attr($activeTab) . '">';
+        echo '<div class="wrap rhbp-settings rhbp-stage" data-active-tab="' . esc_attr($activeTab) . '">';
 
         $this->renderHeader();
-        $this->renderToolbar();
         $this->renderTabs($tabs, $activeTab);
+
+        // Notice-Anker: WordPress verschiebt .notice-Elemente hinter dieses Marker.
+        echo '<hr class="wp-header-end" />';
+
+        echo '<div class="rhbp-body">';
 
         foreach ($tabs as $tabId => $tabLabel) {
             $isActive = $tabId === $activeTab;
@@ -199,18 +203,19 @@ final class SettingsPage
             echo '</div>';
         }
 
-        echo '</div>';
+        echo '</div>'; // .rhbp-body
+        echo '</div>'; // .rhbp-stage
     }
 
     private function renderHeader(): void
     {
         echo '<div class="rhbp-settings__header">';
         echo '<div class="rhbp-settings__logo" aria-hidden="true">';
-        echo '<span class="dashicons dashicons-layout"></span>';
+        echo $this->logoMarkup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo '</div>';
         echo '<div class="rhbp-settings__title">';
         echo '<h1>' . esc_html__('RH Blueprint', 'rh-blueprint-core') . '</h1>';
-        echo '<p>' . esc_html__('Zentrale Steuerung der rh-blueprint Module.', 'rh-blueprint-core') . '</p>';
+        echo '<p>' . esc_html__('Zentrale Steuerung deiner rh-blueprint Module. Allgemeine Einstellungen, Backups und Sync an einem Ort.', 'rh-blueprint-core') . '</p>';
         echo '</div>';
         printf(
             '<span class="rhbp-settings__version">v%s</span>',
@@ -219,16 +224,20 @@ final class SettingsPage
         echo '</div>';
     }
 
-    private function renderToolbar(): void
+    /**
+     * Logo fürs Header-Badge: das gebundelte SVG inline (einfärbbar), sonst eine Dashicon.
+     */
+    private function logoMarkup(): string
     {
-        echo '<div class="rhbp-settings__toolbar">';
-        echo '<div class="rhbp-search">';
-        printf(
-            '<input type="search" id="rhbp-search-input" placeholder="%s" autocomplete="off" />',
-            esc_attr__('Einstellungen durchsuchen…', 'rh-blueprint-core')
-        );
-        echo '</div>';
-        echo '</div>';
+        $svg = rtrim(\rh_blueprint()->dir(), '/') . '/assets/menu-icon.svg';
+        if (is_readable($svg)) {
+            $contents = (string) file_get_contents($svg);
+            if ($contents !== '') {
+                return $contents;
+            }
+        }
+
+        return '<span class="dashicons dashicons-layout"></span>';
     }
 
     /**
