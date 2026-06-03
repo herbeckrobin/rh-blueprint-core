@@ -1,32 +1,29 @@
+/**
+ * Dashboard-Widget im WP7-Look. Token-gesteuert, flach, ohne Gradient/Schatten.
+ * Soll aussehen, als waere es Teil von WordPress, nicht als Fremdkoerper.
+ * Der postbox-header bleibt bewusst nativ (kein Override).
+ */
+.rhbp-widget {
+    --rhbp-accent: #3858e9;
+    --rhbp-text: #1d2327;
+    --rhbp-muted: #646970;
+    --rhbp-border: #dcdcde;
+    --rhbp-tint: #f6f7f7;
+    --rhbp-accent-tint: #eef1fd;
+    --rhbp-radius: 6px;
+
+    font-size: 13px;
+    color: var(--rhbp-text);
+}
+
 #rh_blueprint_widget .inside {
     margin: 0;
     padding: 0;
-    background: #fff;
-}
-
-#rh_blueprint_widget .postbox-header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-bottom: none;
-}
-
-#rh_blueprint_widget .postbox-header h2 {
-    color: #f8fafc;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-}
-
-#rh_blueprint_widget .postbox-header .handle-actions button {
-    color: #94a3b8;
-}
-
-.rhbp-widget {
-    font-size: 13px;
-    color: #1d2327;
 }
 
 .rhbp-widget__section {
-    padding: 16px 18px;
-    border-bottom: 1px solid #f1f5f9;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--rhbp-border);
 }
 
 .rhbp-widget__section:last-child {
@@ -44,7 +41,7 @@
     width: 16px;
     height: 16px;
     font-size: 16px;
-    color: #64748b;
+    color: var(--rhbp-muted);
 }
 
 .rhbp-widget__section-header h3 {
@@ -52,34 +49,29 @@
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #64748b;
+    letter-spacing: 0.05em;
+    color: var(--rhbp-muted);
 }
 
+/* Support: Avatar + Name/Rolle, flach, ohne Card-Hintergrund */
 .rhbp-support-card {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
 }
 
 .rhbp-support-card__avatar {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #2271b1 0%, #135e96 100%);
+    background: var(--rhbp-accent);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    letter-spacing: 0.02em;
     flex-shrink: 0;
-    box-shadow: 0 2px 4px rgba(34, 113, 177, 0.2);
 }
 
 .rhbp-support-card__body {
@@ -91,48 +83,48 @@
     display: block;
     font-size: 14px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--rhbp-text);
     line-height: 1.3;
 }
 
 .rhbp-support-card__body span {
     display: block;
     font-size: 12px;
-    color: #64748b;
-    margin-top: 2px;
+    color: var(--rhbp-muted);
+    margin-top: 1px;
 }
 
+/* Aktionen: flache Buttons, Hover ohne Lift/Schatten */
 .rhbp-actions {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     gap: 6px;
-    margin-top: 12px;
+    margin-top: 14px;
 }
 
 .rhbp-actions a {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 8px 10px;
+    padding: 7px 10px;
     background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
+    border: 1px solid var(--rhbp-border);
+    border-radius: var(--rhbp-radius);
     font-size: 12px;
-    color: #334155;
+    color: var(--rhbp-text);
     text-decoration: none;
-    transition: all 0.15s ease;
+    transition: border-color 0.12s ease, background-color 0.12s ease, color 0.12s ease;
 }
 
 .rhbp-actions a:hover {
-    border-color: #2271b1;
-    background: #f0f6fc;
-    color: #135e96;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
+    border-color: var(--rhbp-accent);
+    background: var(--rhbp-accent-tint);
+    color: var(--rhbp-accent);
 }
 
-.rhbp-actions a:focus {
-    outline: 2px solid #2271b1;
+.rhbp-actions a:focus-visible {
+    outline: 2px solid var(--rhbp-accent);
     outline-offset: 1px;
 }
 
@@ -140,40 +132,41 @@
     width: 14px;
     height: 14px;
     font-size: 14px;
-    color: #64748b;
+    color: var(--rhbp-muted);
     flex-shrink: 0;
+    transition: color 0.12s ease;
 }
 
 .rhbp-actions a:hover .dashicons {
-    color: #2271b1;
+    color: var(--rhbp-accent);
 }
 
+/* Schnellzugriff: dezente Liste */
 .rhbp-quick-links {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
 .rhbp-quick-links a {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 12px;
-    border-radius: 6px;
+    padding: 8px 10px;
+    border-radius: var(--rhbp-radius);
     font-size: 13px;
-    color: #334155;
+    color: var(--rhbp-text);
     text-decoration: none;
-    transition: all 0.15s ease;
+    transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 .rhbp-quick-links a:hover {
-    background: #f1f5f9;
-    color: #2271b1;
-    padding-left: 14px;
+    background: var(--rhbp-tint);
+    color: var(--rhbp-accent);
 }
 
-.rhbp-quick-links a:focus {
-    outline: 2px solid #2271b1;
+.rhbp-quick-links a:focus-visible {
+    outline: 2px solid var(--rhbp-accent);
     outline-offset: -2px;
 }
 
@@ -181,19 +174,19 @@
     width: 16px;
     height: 16px;
     font-size: 16px;
-    color: #94a3b8;
+    color: var(--rhbp-muted);
     flex-shrink: 0;
-    transition: color 0.15s ease;
+    transition: color 0.12s ease;
 }
 
 .rhbp-quick-links a:hover .dashicons {
-    color: #2271b1;
+    color: var(--rhbp-accent);
 }
 
 .rhbp-quick-links a .rhbp-quick-links__arrow {
     margin-left: auto;
     opacity: 0;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.12s ease;
 }
 
 .rhbp-quick-links a:hover .rhbp-quick-links__arrow {
