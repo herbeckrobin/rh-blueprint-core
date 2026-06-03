@@ -8,4 +8,4 @@
 
 declare(strict_types=1);
 
-return '2.0.0';
+return '2.2.0';
