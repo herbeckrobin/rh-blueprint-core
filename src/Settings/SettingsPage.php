@@ -25,23 +25,79 @@ final class SettingsPage
     {
         add_action('admin_menu', [$this, 'registerMenu']);
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
+        add_filter('submenu_file', [$this, 'highlightSubmenu']);
+    }
+
+    /**
+     * Hebt den richtigen Untermenü-Eintrag hervor. Ohne diesen Filter markiert
+     * WordPress beim `&tab=`-Pattern immer den ersten Eintrag (Allgemein).
+     */
+    public function highlightSubmenu(?string $submenuFile): ?string
+    {
+        $page = isset($_GET['page']) ? sanitize_key((string) $_GET['page']) : '';
+        if ($page !== self::MENU_SLUG) {
+            return $submenuFile;
+        }
+
+        $tabs = $this->hub->tabs();
+        $tab = isset($_GET['tab']) ? sanitize_key((string) $_GET['tab']) : '';
+        if ($tab === '' || ! isset($tabs[$tab])) {
+            return $submenuFile;
+        }
+
+        return $tab === (string) array_key_first($tabs) ? self::MENU_SLUG : self::MENU_SLUG . '&tab=' . $tab;
     }
 
     public function registerMenu(): void
     {
-        add_submenu_page(
-            'options-general.php',
+        add_menu_page(
             __('RH Blueprint', 'rh-blueprint-core'),
             __('RH Blueprint', 'rh-blueprint-core'),
             self::CAPABILITY,
             self::MENU_SLUG,
-            [$this, 'render']
+            [$this, 'render'],
+            $this->menuIcon(),
+            58
         );
+
+        // Ein Untermenü-Eintrag pro Tab. Der erste teilt sich den Slug mit dem
+        // Top-Level-Eintrag (überschreibt dessen Default-Label).
+        $first = true;
+        foreach ($this->hub->tabs() as $tabId => $label) {
+            add_submenu_page(
+                self::MENU_SLUG,
+                $label,
+                $label,
+                self::CAPABILITY,
+                $first ? self::MENU_SLUG : self::MENU_SLUG . '&tab=' . $tabId,
+                [$this, 'render']
+            );
+            $first = false;
+        }
+    }
+
+    /**
+     * Menü-Icon: das gebundelte Logo (assets/menu-icon.svg) als data-URL, sonst
+     * eine Dashicon als Fallback.
+     */
+    private function menuIcon(): string
+    {
+        $svg = rtrim(\rh_blueprint()->dir(), '/') . '/assets/menu-icon.svg';
+        if (is_readable($svg)) {
+            $contents = (string) file_get_contents($svg);
+            if ($contents !== '') {
+                return 'data:image/svg+xml;base64,' . base64_encode($contents);
+            }
+        }
+
+        return 'dashicons-layout';
     }
 
     public function enqueueAssets(string $hook): void
     {
-        if ($hook !== 'settings_page_' . self::MENU_SLUG) {
+        // Greift für die Top-Level-Page und alle Untermenü-Tabs (alle ?page=rh-blueprint).
+        $page = isset($_GET['page']) ? sanitize_key((string) $_GET['page']) : '';
+        if ($page !== self::MENU_SLUG) {
             return;
         }
 
@@ -185,7 +241,7 @@ final class SettingsPage
             $url = add_query_arg([
                 'page' => self::MENU_SLUG,
                 'tab' => $tabId,
-            ], admin_url('options-general.php'));
+            ], admin_url('admin.php'));
 
             printf(
                 '<a href="%1$s" class="nav-tab %2$s" data-tab="%3$s">%4$s</a>',

@@ -20,7 +20,7 @@ final class SupportGroup implements GroupInterface
 
     public function tab(): string
     {
-        return 'support';
+        return 'general';
     }
 
     public function title(): string

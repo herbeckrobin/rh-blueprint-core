@@ -33,6 +33,10 @@ function do_action(string $hook, mixed ...$args): void
     }
 }
 
+function add_filter(string $hook, callable $cb, int $prio = 10, int $args = 1): void
+{
+}
+
 function sanitize_key(string $key): string
 {
     return strtolower(preg_replace('/[^a-z0-9_\-]/', '', strtolower($key)) ?? '');
@@ -115,13 +119,12 @@ check('Environment: isDevelopment false', \RhBlueprint\Core\Environment::isDevel
 // --- 5. Settings-Hub + Core-Features ----------------------------------------
 $settings = rh_blueprint()->settings();
 check('settings() liefert SettingsHub', $settings instanceof \RhBlueprint\Core\Settings\SettingsHub);
-check('storage() liefert Storage', rh_blueprint()->storage() instanceof \RhBlueprint\Core\Storage);
 
 // Der Core registriert beim Boot bereits den Support-Tab (Prio 10) + Support-Group.
-check('Support-Tab ist als Core-Feature vorhanden', isset($settings->tabs()['support']));
+check('Support-Tab ist als Core-Feature vorhanden', isset($settings->tabs()['general']));
 $hasSupportGroup = false;
 foreach ($settings->groups() as $g) {
-    if ($g->id() === 'support_info' && $g->tab() === 'support') {
+    if ($g->id() === 'support_info' && $g->tab() === 'general') {
         $hasSupportGroup = true;
     }
 }
@@ -130,7 +133,7 @@ check('Support-Group ist als Core-Feature registriert', $hasSupportGroup);
 $settings->registerTab('beta', 'Beta', 30);
 $settings->registerTab('alpha', 'Alpha', 15);
 $settings->registerTab('gamma', 'Gamma', 20);
-check('Tabs nach Priorität sortiert (support, alpha, gamma, beta)', array_keys($settings->tabs()) === ['support', 'alpha', 'gamma', 'beta']);
+check('Tabs nach Priorität sortiert (support, alpha, gamma, beta)', array_keys($settings->tabs()) === ['general', 'alpha', 'gamma', 'beta']);
 check('Tab-Label korrekt zugeordnet', $settings->tabs()['gamma'] === 'Gamma');
 
 $group = new class () implements \RhBlueprint\Core\Settings\GroupInterface {

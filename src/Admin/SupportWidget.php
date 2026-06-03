@@ -155,8 +155,8 @@ final class SupportWidget
     {
         $default = [
             [
-                'label' => __('Einstellungen', 'rh-blueprint-core'),
-                'url' => admin_url('options-general.php?page=' . SettingsPage::MENU_SLUG),
+                'label' => __('Allgemein', 'rh-blueprint-core'),
+                'url' => admin_url('admin.php?page=' . SettingsPage::MENU_SLUG),
                 'icon' => 'admin-generic',
             ],
         ];

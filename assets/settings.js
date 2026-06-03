@@ -21,15 +21,11 @@
         wrap.dataset.activeTab = tabId;
     }
 
-    tabs.forEach((tab) => {
-        tab.addEventListener('click', (event) => {
-            event.preventDefault();
-            showPanel(tab.dataset.tab);
-            const url = new URL(window.location.href);
-            url.searchParams.set('tab', tab.dataset.tab);
-            window.history.replaceState({}, '', url);
-        });
-    });
+    // Die Tabs sind echte Links (admin.php?page=...&tab=...). Wir fangen den Klick
+    // bewusst NICHT ab: so ist jeder Tab-Wechsel eine echte Navigation, und WordPress 7
+    // legt seinen nativen View-Transition-Übergang automatisch darüber, exakt wie beim
+    // Menü links. Die Panel-Sichtbarkeit setzt der Server (render()) anhand von ?tab=.
+    // showPanel() bleibt nur für die Live-Suche (sie blendet Panels temporär ein/aus).
 
     if (searchInput) {
         const rows = Array.from(wrap.querySelectorAll('.form-table tr'));

@@ -29,15 +29,12 @@ final class Core
 
     private SettingsHub $settings;
 
-    private Storage $storage;
-
     private function __construct(
         private readonly string $version,
         private readonly string $dir,
     ) {
         $this->services = new ServiceRegistry();
         $this->settings = new SettingsHub();
-        $this->storage = new Storage();
     }
 
     /**
@@ -76,7 +73,7 @@ final class Core
      */
     public function bootFeatures(): void
     {
-        $this->settings->registerTab('support', __('Support', 'rh-blueprint-core'), 10);
+        $this->settings->registerTab('general', __('Allgemein', 'rh-blueprint-core'), 10);
         $this->settings->registerGroup(new SupportGroup());
 
         /**
@@ -109,11 +106,6 @@ final class Core
     public function settings(): SettingsHub
     {
         return $this->settings;
-    }
-
-    public function storage(): Storage
-    {
-        return $this->storage;
     }
 
     public function version(): string
