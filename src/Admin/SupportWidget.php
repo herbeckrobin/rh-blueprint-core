@@ -24,9 +24,21 @@ final class SupportWidget
         add_action('admin_enqueue_scripts', [$this, 'enqueueAssets']);
     }
 
+    /**
+     * Opt-in: per Default aus. Wird über den Schalter im Allgemein-Tab aktiviert.
+     */
+    private function isEnabled(): bool
+    {
+        return (bool) rhbp_setting(
+            AdminAreaGroup::GROUP_ID,
+            AdminAreaGroup::FIELD_SUPPORT_WIDGET,
+            false
+        );
+    }
+
     public function enqueueAssets(string $hook): void
     {
-        if ($hook !== 'index.php') {
+        if ($hook !== 'index.php' || ! $this->isEnabled()) {
             return;
         }
 
@@ -42,6 +54,10 @@ final class SupportWidget
 
     public function register(): void
     {
+        if (! $this->isEnabled()) {
+            return;
+        }
+
         wp_add_dashboard_widget(
             self::WIDGET_ID,
             __('RH Blueprint', 'rh-blueprint-core'),

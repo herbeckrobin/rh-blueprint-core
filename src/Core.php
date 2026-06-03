@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RhBlueprint\Core;
 
+use RhBlueprint\Core\Admin\AdminAreaGroup;
 use RhBlueprint\Core\Admin\DashboardCleanup;
 use RhBlueprint\Core\Admin\SupportGroup;
 use RhBlueprint\Core\Admin\SupportWidget;
@@ -74,6 +75,7 @@ final class Core
     public function bootFeatures(): void
     {
         $this->settings->registerTab('general', __('Allgemein', 'rh-blueprint-core'), 10);
+        $this->settings->registerGroup(new AdminAreaGroup());
         $this->settings->registerGroup(new SupportGroup());
 
         /**

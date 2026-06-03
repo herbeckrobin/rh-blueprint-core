@@ -41,7 +41,6 @@ final class SupportGroup implements GroupInterface
                 type: SettingField::TYPE_TEXT,
                 label: __('Name / Agentur', 'rh-blueprint-core'),
                 description: __('Name des Ansprechpartners oder der Agentur.', 'rh-blueprint-core'),
-                default: 'Robin Herbeck',
                 keywords: ['kontakt', 'agentur', 'entwickler'],
             ),
             new SettingField(
@@ -49,7 +48,6 @@ final class SupportGroup implements GroupInterface
                 type: SettingField::TYPE_TEXT,
                 label: __('Rolle', 'rh-blueprint-core'),
                 description: __('Funktion oder Position des Ansprechpartners (z.B. "Webentwickler").', 'rh-blueprint-core'),
-                default: 'Webentwickler',
                 keywords: ['rolle', 'position', 'funktion', 'job'],
             ),
             new SettingField(

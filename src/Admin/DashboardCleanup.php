@@ -16,8 +16,24 @@ final class DashboardCleanup
         add_action('admin_head-index.php', [$this, 'hideWelcomePanel']);
     }
 
+    /**
+     * Opt-in: per Default aus. Wird über den Schalter im Allgemein-Tab aktiviert.
+     */
+    private function isEnabled(): bool
+    {
+        return (bool) rhbp_setting(
+            AdminAreaGroup::GROUP_ID,
+            AdminAreaGroup::FIELD_DASHBOARD_CLEANUP,
+            false
+        );
+    }
+
     public function removeWidgets(): void
     {
+        if (! $this->isEnabled()) {
+            return;
+        }
+
         /** @var array<int, array{0: string, 1: string, 2: string}> $widgets */
         $widgets = apply_filters('rh-blueprint/dashboard/remove', [
             ['dashboard_activity', 'dashboard', 'normal'],
@@ -39,6 +55,10 @@ final class DashboardCleanup
 
     public function hideWelcomePanel(): void
     {
+        if (! $this->isEnabled()) {
+            return;
+        }
+
         $userId = get_current_user_id();
         if ($userId > 0) {
             update_user_meta($userId, 'show_welcome_panel', 0);
