@@ -360,6 +360,7 @@
         try {
             const status = await ajax('rhbp_sync_status', { job_id: activeJobId }, 'GET');
             updateProgressUI(status);
+            updateStallNotice(status);
 
             if (status.phase === 'done') {
                 stopElapsed();
@@ -384,6 +385,41 @@
             // Sonst: stilles Retry
             pollTimer = setTimeout(pollStatus, 2500);
         }
+    }
+
+    // Stillstand-Erkennung: das Backend markiert einen Job als "stale", wenn seit > 90s kein
+    // Heartbeat kam (Prozess gestorben / Loopback blockiert). Statt stumm weiterzudrehen,
+    // sehen wir das und bieten einen Abbruch/Neustart an. Der Cron-Watchdog versucht parallel,
+    // den Job wiederzubeleben, darum läuft das Polling weiter.
+    function updateStallNotice(status) {
+        var running = status.phase !== 'done' && status.phase !== 'failed';
+        var notice = modal.querySelector('[data-stall-notice]');
+
+        if (!status.stale || !running) {
+            if (notice) notice.hidden = true;
+            return;
+        }
+
+        if (!notice) {
+            notice = document.createElement('div');
+            notice.setAttribute('data-stall-notice', '');
+            notice.style.cssText = 'margin-top:12px;padding:10px 12px;border:1px solid #dba617;background:#fcf9e8;border-radius:6px;font-size:13px;line-height:1.5;';
+            notice.innerHTML = 'Seit über einer Minute kein Fortschritt. Der Watchdog versucht, den Sync wiederzubeleben. ' +
+                '<button type="button" data-stall-restart class="button-link" style="color:#b32d2e;">Abbrechen und neu starten</button>';
+            var host = modal.querySelector('[data-state="progress"]') || modal.querySelector('.rhbp-modal__body') || modal;
+            host.appendChild(notice);
+
+            var btn = notice.querySelector('[data-stall-restart]');
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    if (activeJobId) ajax('rhbp_sync_clear', { job_id: activeJobId }, 'POST').catch(function () {});
+                    stopPolling();
+                    stopElapsed();
+                    closeModal();
+                });
+            }
+        }
+        notice.hidden = false;
     }
 
     function updateProgressUI(status) {
