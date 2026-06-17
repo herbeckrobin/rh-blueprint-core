@@ -6,6 +6,7 @@ namespace RhBlueprint\Core;
 
 use RhBlueprint\Core\Admin\AdminAreaGroup;
 use RhBlueprint\Core\Admin\DashboardCleanup;
+use RhBlueprint\Core\Admin\SuitePage;
 use RhBlueprint\Core\Admin\SupportGroup;
 use RhBlueprint\Core\Admin\SupportWidget;
 use RhBlueprint\Core\Settings\SettingsHub;
@@ -66,6 +67,7 @@ final class Core
         (new SettingsPage($this->settings))->boot();
         (new DashboardCleanup())->boot();
         (new SupportWidget())->boot();
+        (new SuitePage())->boot();
     }
 
     /**

@@ -136,6 +136,7 @@ final class SettingsPage
         echo '<div class="wrap rhbp-settings rhbp-stage" data-active-tab="' . esc_attr($activeTab) . '">';
 
         $this->renderHeader();
+        $this->renderSuiteNotice();
         $this->renderTabs($tabs, $activeTab);
 
         // Notice-Anker: WordPress verschiebt .notice-Elemente hinter dieses Marker.
@@ -260,6 +261,45 @@ final class SettingsPage
                 esc_html($tabLabel)
             );
         }
+
+        // Ghost-Tabs: nicht installierte/aktive Suite-Module als ausgegraute Tabs.
+        // Ein Modul liefert sie über den Filter (SuitePage), Klick fragt + installiert.
+        /** @var array<int, array{slug: string, label: string, state: string}> $ghosts */
+        $ghosts = (array) apply_filters('rh-blueprint/settings/ghost_tabs', []);
+        foreach ($ghosts as $ghost) {
+            if (empty($ghost['slug']) || empty($ghost['label'])) {
+                continue;
+            }
+            $ghostTitle = ($ghost['state'] ?? 'missing') === 'inactive'
+                ? __('Installiert, aber nicht aktiv. Klicken zum Aktivieren.', 'rh-blueprint-core')
+                : __('Noch nicht installiert. Klicken zum Hinzufügen.', 'rh-blueprint-core');
+            printf(
+                '<a href="#" class="nav-tab is-ghost" data-rhbp-module="%1$s" data-rhbp-state="%2$s" data-rhbp-label="%3$s" title="%4$s"><span class="rhbp-ghost-add" aria-hidden="true">+</span>%3$s</a>',
+                esc_attr((string) $ghost['slug']),
+                esc_attr((string) ($ghost['state'] ?? 'missing')),
+                esc_attr((string) $ghost['label']),
+                esc_attr($ghostTitle)
+            );
+        }
+
         echo '</nav>';
+    }
+
+    /**
+     * Ergebnis einer Suite-Installation/-Aktivierung anzeigen (aus dem Transient).
+     */
+    private function renderSuiteNotice(): void
+    {
+        $result = get_transient('rhbp_suite_result_' . get_current_user_id());
+        if (! is_array($result) || ! isset($result['message'])) {
+            return;
+        }
+        delete_transient('rhbp_suite_result_' . get_current_user_id());
+
+        printf(
+            '<div class="notice %1$s is-dismissible"><p>%2$s</p></div>',
+            ! empty($result['ok']) ? 'notice-success' : 'notice-error',
+            esc_html((string) $result['message'])
+        );
     }
 }

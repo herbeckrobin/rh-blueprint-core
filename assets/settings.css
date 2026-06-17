@@ -2261,3 +2261,34 @@ body[class*="page_rh-blueprint"] #wpfooter a:hover {
         animation: none !important;
     }
 }
+
+/* Suite-Ghost-Tabs: nicht installierte/inaktive Module. Dezent, gestrichelte
+   Unterlinie + kleines Plus-Badge signalisieren "hinzufuegbar". Klick fragt + installiert. */
+.rhbp-tabs .nav-tab.is-ghost {
+	gap: 6px;
+	color: var(--rhbp-muted);
+	border-bottom: 2px dashed var(--rhbp-border-strong);
+	cursor: pointer;
+}
+.rhbp-tabs .nav-tab.is-ghost:hover,
+.rhbp-tabs .nav-tab.is-ghost:focus {
+	color: var(--rhbp-blue);
+	border-bottom-color: var(--rhbp-blue);
+}
+.rhbp-tabs .nav-tab.is-ghost .rhbp-ghost-add {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--rhbp-blue-soft);
+	color: var(--rhbp-blue);
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 1;
+}
+.rhbp-tabs .nav-tab.is-ghost:hover .rhbp-ghost-add {
+	background: var(--rhbp-blue);
+	color: #fff;
+}
