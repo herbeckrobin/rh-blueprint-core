@@ -118,6 +118,56 @@ final class SettingsPage
             $core->assetVersion('assets/settings.js', $version),
             true
         );
+
+        // wp.media für die TYPE_MEDIA-Felder. Die Picker-Mechanik ist generisch
+        // (data-rhbp-media), damit jedes Modul ein Bild-Feld nutzen kann.
+        wp_enqueue_media();
+        wp_add_inline_script('rh-blueprint-settings', $this->mediaPickerScript());
+    }
+
+    /**
+     * Generische wp.media-Picker-Mechanik für alle TYPE_MEDIA-Felder.
+     * Event-Delegation auf document, damit auch dynamisch eingefügte Felder greifen.
+     */
+    private function mediaPickerScript(): string
+    {
+        $title = esc_js(__('Bild wählen', 'rh-blueprint-core'));
+        $button = esc_js(__('Übernehmen', 'rh-blueprint-core'));
+
+        return <<<JS
+(function(){
+    if (typeof wp === 'undefined' || !wp.media) { return; }
+    var frame = null, active = null;
+    document.addEventListener('click', function(e){
+        var select = e.target.closest('[data-rhbp-media] [data-rhbp-media-select]');
+        var remove = e.target.closest('[data-rhbp-media] [data-rhbp-media-remove]');
+        if (select) {
+            e.preventDefault();
+            active = select.closest('[data-rhbp-media]');
+            frame = frame || wp.media({ title: '$title', multiple: false, library: { type: 'image' }, button: { text: '$button' } });
+            frame.off('select');
+            frame.on('select', function(){
+                if (!active) { return; }
+                var att = frame.state().get('selection').first().toJSON();
+                active.querySelector('[data-rhbp-media-input]').value = att.id;
+                var img = active.querySelector('[data-rhbp-media-preview]');
+                img.src = (att.sizes && att.sizes.medium) ? att.sizes.medium.url : att.url;
+                img.hidden = false;
+                active.querySelector('[data-rhbp-media-remove]').hidden = false;
+            });
+            frame.open();
+        }
+        if (remove) {
+            e.preventDefault();
+            var wrap = remove.closest('[data-rhbp-media]');
+            wrap.querySelector('[data-rhbp-media-input]').value = '';
+            var preview = wrap.querySelector('[data-rhbp-media-preview]');
+            preview.src = ''; preview.hidden = true;
+            remove.hidden = true;
+        }
+    });
+})();
+JS;
     }
 
     public function render(): void

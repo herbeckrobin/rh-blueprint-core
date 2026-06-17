@@ -16,6 +16,7 @@ final class SettingField
     public const TYPE_BOOLEAN = 'boolean';
     public const TYPE_SELECT = 'select';
     public const TYPE_TEXTAREA = 'textarea';
+    public const TYPE_MEDIA = 'media';
 
     /**
      * @param array<string, string> $choices
@@ -47,8 +48,28 @@ final class SettingField
             self::TYPE_BOOLEAN => (bool) $value,
             self::TYPE_SELECT => array_key_exists((string) $value, $this->choices) ? (string) $value : (string) $this->default,
             self::TYPE_TEXTAREA => sanitize_textarea_field((string) $value),
+            self::TYPE_MEDIA => $this->sanitizeMedia($value),
             default => sanitize_text_field((string) $value),
         };
+    }
+
+    /**
+     * Ein Media-Feld speichert eine Attachment-ID (portabel, die URL wird beim
+     * Rendern aufgelöst). Eine bereits gespeicherte Legacy-URL bleibt erhalten,
+     * damit die Migration von früheren URL-Feldern nichts verschluckt.
+     */
+    private function sanitizeMedia(mixed $value): string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return '';
+        }
+        if (ctype_digit($value)) {
+            return (string) absint($value);
+        }
+
+        return esc_url_raw($value);
     }
 
     public function render(string $name, mixed $value): void
@@ -87,6 +108,10 @@ final class SettingField
                 echo '</select>';
                 break;
 
+            case self::TYPE_MEDIA:
+                $this->renderMedia($id, $current);
+                break;
+
             case self::TYPE_EMAIL:
             case self::TYPE_URL:
             case self::TYPE_TEXT:
@@ -103,5 +128,48 @@ final class SettingField
         if ($this->description !== '') {
             printf('<p class="description">%s</p>', esc_html($this->description));
         }
+    }
+
+    /**
+     * Media-Feld: versteckte Attachment-ID + Vorschau + wp.media-Picker-Buttons.
+     * Die JS-Mechanik (data-rhbp-media) kommt aus dem Core-Settings-Script.
+     *
+     * @param mixed $current Attachment-ID (bevorzugt) oder Legacy-Bild-URL.
+     */
+    private function renderMedia(string $id, mixed $current): void
+    {
+        $stored = trim((string) $current);
+        $previewUrl = '';
+
+        if (ctype_digit($stored)) {
+            $src = wp_get_attachment_image_url((int) $stored, 'medium');
+            $previewUrl = is_string($src) ? $src : '';
+        } elseif ($stored !== '') {
+            $previewUrl = $stored; // Legacy-URL
+        }
+
+        $hasImage = $previewUrl !== '';
+
+        echo '<div class="rhbp-media" data-rhbp-media>';
+        printf(
+            '<input type="hidden" id="%1$s" name="%1$s" value="%2$s" data-rhbp-media-input />',
+            esc_attr($id),
+            esc_attr($stored)
+        );
+        printf(
+            '<img src="%1$s" alt="" data-rhbp-media-preview style="max-width:160px;height:auto;display:block;margin:0 0 8px;border-radius:4px"%2$s />',
+            esc_url($previewUrl),
+            $hasImage ? '' : ' hidden'
+        );
+        printf(
+            '<button type="button" class="button" data-rhbp-media-select>%s</button> ',
+            esc_html__('Bild wählen', 'rh-blueprint-core')
+        );
+        printf(
+            '<button type="button" class="button-link" data-rhbp-media-remove%2$s>%1$s</button>',
+            esc_html__('Entfernen', 'rh-blueprint-core'),
+            $hasImage ? '' : ' hidden'
+        );
+        echo '</div>';
     }
 }

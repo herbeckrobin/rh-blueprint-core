@@ -121,10 +121,20 @@ final class SettingsHub
             add_settings_section(
                 $section,
                 $group->title(),
-                static function () use ($group): void {
+                static function () use ($group, $optionName): void {
                     if ($group->description() !== '') {
                         printf('<p>%s</p>', esc_html($group->description()));
                     }
+
+                    // Marker, damit das Options-Array auch dann im POST landet,
+                    // wenn ALLE Checkboxen abgewählt sind. Ohne ihn fehlt der
+                    // Array-Key komplett, die Sanitize bekommt null und gibt []
+                    // zurück, wodurch die Gruppe beim nächsten Laden auf ihre
+                    // Defaults zurückfällt statt "alles aus" zu speichern.
+                    printf(
+                        '<input type="hidden" name="%s[__present]" value="1" />',
+                        esc_attr($optionName)
+                    );
                 },
                 $page
             );

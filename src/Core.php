@@ -68,6 +68,11 @@ final class Core
         (new DashboardCleanup())->boot();
         (new SupportWidget())->boot();
         (new SuitePage())->boot();
+
+        // Provisioning-Command für White-Label-Sites (ADR 0001). Nur unter CLI.
+        if (defined('WP_CLI') && WP_CLI) {
+            \WP_CLI::add_command('rh seed', new Cli\SeedCommand());
+        }
     }
 
     /**
