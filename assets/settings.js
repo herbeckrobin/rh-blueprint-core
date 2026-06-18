@@ -730,12 +730,22 @@
         if (open) closeBackdrop(open);
     });
 
-    // Option-Kacheln: is-checked spiegeln
+    // Option-Kacheln: is-checked spiegeln (Checkbox-Mehrfachauswahl + Radio-Gruppen)
     settings.addEventListener('change', (e) => {
         const input = e.target;
-        if (input.matches && input.matches('.rhbp-option input[type="checkbox"]')) {
+        if (!input.matches) return;
+        if (input.matches('.rhbp-option input[type="checkbox"]')) {
             const option = input.closest('.rhbp-option');
             if (option) option.classList.toggle('is-checked', input.checked);
+        } else if (input.matches('.rhbp-option input[type="radio"]')) {
+            // Ganze Gruppe spiegeln, die abgewählten Radios feuern kein Event.
+            const scope = input.closest('.rhbp-option-grid') || settings;
+            Array.from(scope.querySelectorAll('.rhbp-option input[type="radio"]'))
+                .filter((r) => r.name === input.name)
+                .forEach((r) => {
+                    const opt = r.closest('.rhbp-option');
+                    if (opt) opt.classList.toggle('is-checked', r.checked);
+                });
         }
     });
 }());

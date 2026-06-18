@@ -466,6 +466,63 @@
     color: var(--rhbp-muted);
 }
 
+/* ---- Switch (An/Aus-Schalter), data-attribut-frei, pures Markup -------
+   <label class="rhbp-switch"><input type="checkbox"><span class="rhbp-switch__track"></span></label>
+   Genutzt von rh-tracking, rh-monitor (Dienst-Reihen). */
+.rhbp-settings .rhbp-toggle-form {
+    display: flex;
+    margin: 0;
+}
+
+.rhbp-settings .rhbp-switch {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+.rhbp-settings .rhbp-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+}
+
+.rhbp-settings .rhbp-switch__track {
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--rhbp-border-strong);
+    transition: background 0.15s ease;
+    position: relative;
+}
+
+.rhbp-settings .rhbp-switch__track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s ease;
+}
+
+.rhbp-settings .rhbp-switch input:checked + .rhbp-switch__track {
+    background: var(--rhbp-blue);
+}
+
+.rhbp-settings .rhbp-switch input:checked + .rhbp-switch__track::after {
+    transform: translateX(16px);
+}
+
+.rhbp-settings .rhbp-switch input:focus-visible + .rhbp-switch__track {
+    outline: 2px solid var(--rhbp-blue);
+    outline-offset: 2px;
+}
+
 /* ---- Option-Grid (Kachel-Mehrfachauswahl) ---------------------------- */
 .rhbp-settings .rhbp-option-grid {
     display: grid;
