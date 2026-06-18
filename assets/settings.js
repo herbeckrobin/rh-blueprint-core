@@ -714,7 +714,11 @@
             e.preventDefault();
             const target = document.querySelector(copyBtn.dataset.rhbpCopy);
             if (target && navigator.clipboard) {
-                navigator.clipboard.writeText(target.textContent.trim()).then(() => {
+                // Formularfelder fuehren ihren Wert in .value, nicht in .textContent.
+                const raw = (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+                    ? target.value
+                    : target.textContent;
+                navigator.clipboard.writeText((raw || '').trim()).then(() => {
                     copyBtn.classList.add('is-copied');
                     setTimeout(() => copyBtn.classList.remove('is-copied'), 1500);
                 }).catch(() => {});
