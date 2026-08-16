@@ -235,11 +235,22 @@ final class MailPanel
      */
     private function renderPreview(MailKind $kind): void
     {
-        $sections = apply_filters('rh-blueprint/report/sections', [], time() - WEEK_IN_SECONDS);
+        // Einmal je Seitenaufruf, nicht einmal je Beitrag. Der Filter lässt
+        // jedes Modul seine Zahlen zusammensuchen und kostet gemessen vier
+        // Abfragen und sechs Millisekunden. Solange nur ein Modul einen
+        // Berichtsbeitrag hat, fällt das nicht auf. Beim zweiten wäre es die
+        // doppelte Arbeit für dieselbe Antwort, und niemand käme auf die Idee,
+        // hier zu suchen.
+        static $sections = null;
+
+        if ($sections === null) {
+            $gefiltert = apply_filters('rh-blueprint/report/sections', [], time() - WEEK_IN_SECONDS);
+            $sections = is_array($gefiltert) ? $gefiltert : [];
+        }
 
         $eigene = null;
 
-        foreach (is_array($sections) ? $sections : [] as $section) {
+        foreach ($sections as $section) {
             if ($section instanceof ReportSection && $section->module === $kind->module) {
                 $eigene = $section;
                 break;
