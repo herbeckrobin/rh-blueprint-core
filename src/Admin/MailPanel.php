@@ -130,10 +130,22 @@ final class MailPanel
         echo '<div class="rhbp-mail-row">';
 
         echo '<div class="rhbp-mail-row__head">';
-        echo Ui::switch(['name' => $feld . '[enabled]', 'checked' => $an]);
+
+        // Eine Pflichtmail bekommt einen gesperrten Schalter statt gar keinem:
+        // so ist zu sehen, dass sie rausgeht, und warum man daran nichts dreht.
+        echo Ui::switch([
+            'name' => $feld . '[enabled]',
+            'checked' => $an,
+            'disabled' => ! $kind->lockable,
+            'title' => $kind->lockable ? '' : __('Diese Mail ist Pflicht und lässt sich nicht abschalten.', 'rh-blueprint-core'),
+        ]);
 
         echo '<div class="rhbp-mail-row__text">';
         echo '<strong>' . esc_html($kind->label) . '</strong>';
+
+        if (! $kind->lockable) {
+            echo ' <span class="rhbp-pill">' . esc_html__('Pflicht', 'rh-blueprint-core') . '</span>';
+        }
 
         if ($kind->urgent) {
             echo ' <span class="rhbp-pill rhbp-pill--warn">' . esc_html__('dringend', 'rh-blueprint-core') . '</span>';
@@ -172,13 +184,26 @@ final class MailPanel
             __('leer: wie beim Mailversand eingestellt', 'rh-blueprint-core')
         );
 
+        $betreffHinweis = __('leer: Vorgabe des Moduls. Die Domain kommt davor.', 'rh-blueprint-core');
+
+        // Ein Betreff-Feld ohne die Liste der Platzhalter ist eine Einladung
+        // zum Raten. Wer {bestellnummer} nicht kennt, schreibt sie auch nicht.
+        if ($kind->placeholders !== []) {
+            $betreffHinweis .= ' ' . sprintf(
+                /* translators: %s: Liste der Platzhalter */
+                __('Einsetzbar: %s', 'rh-blueprint-core'),
+                implode(' ', array_map(static fn (string $p): string => '{' . $p . '}', $kind->placeholders))
+            );
+        }
+
         $this->field(
             $feld . '[subject]',
             __('Betreff', 'rh-blueprint-core'),
             MailSettings::subject($kind->id),
-            __('leer: Vorgabe des Moduls. Die Domain kommt davor.', 'rh-blueprint-core'),
+            $betreffHinweis,
             'text',
-            true
+            true,
+            $kind->subject
         );
 
         echo '<label class="rhbp-field rhbp-field--full">';
@@ -240,8 +265,20 @@ final class MailPanel
         echo '</div>';
     }
 
-    private function field(string $name, string $label, string $value, string $hint, string $type = 'text', bool $full = false): void
-    {
+    /**
+     * @param string $vorgabe Steht als Platzhaltertext im leeren Feld. Damit
+     *                        sieht man, was ohne eigene Eingabe rausgeht,
+     *                        statt nur zu lesen, dass es eine Vorgabe gibt.
+     */
+    private function field(
+        string $name,
+        string $label,
+        string $value,
+        string $hint,
+        string $type = 'text',
+        bool $full = false,
+        string $vorgabe = ''
+    ): void {
         echo '<label class="rhbp-field' . ($full ? ' rhbp-field--full' : '') . '">';
         echo '<span class="rhbp-field__label">' . esc_html($label) . '</span>';
         printf(
@@ -249,8 +286,13 @@ final class MailPanel
             esc_attr($type),
             esc_attr($name),
             esc_attr($value),
-            esc_attr($hint)
+            esc_attr($vorgabe !== '' ? $vorgabe : $hint)
         );
+
+        if ($vorgabe !== '') {
+            echo '<span class="rhbp-field__desc">' . esc_html($hint) . '</span>';
+        }
+
         echo '</label>';
     }
 

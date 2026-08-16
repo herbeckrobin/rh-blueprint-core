@@ -40,13 +40,20 @@ final class MailSettings
      */
     public static function enabled(string $kindId): bool
     {
+        $kind = MailKind::get($kindId);
+
+        // Pflichtmails gehen immer raus. Eine Bestellbestätigung ist gesetzlich
+        // fällig, ein gespeichertes "aus" darf sie nicht anhalten, auch nicht
+        // wenn es aus einer früheren Fassung stammt oder mitgesynct wurde.
+        if ($kind !== null && ! $kind->lockable) {
+            return true;
+        }
+
         $stored = self::for($kindId);
 
         if (array_key_exists('enabled', $stored)) {
             return (bool) $stored['enabled'];
         }
-
-        $kind = MailKind::get($kindId);
 
         // Unbekannte Art nicht verschlucken: lieber eine Mail zu viel als eine
         // Meldung, die niemand je sieht.

@@ -15,6 +15,18 @@ namespace RhBlueprint\Core\Mail;
  * Ob eine Mail sofort rausgeht oder in den Sammelbericht wandert, steht im
  * Code und nicht in den Einstellungen: eine Bestellbestätigung sammelt man
  * nicht. Der Kunde entscheidet nur, OB er sie bekommt und wie sie aussieht.
+ *
+ * Drei Angaben stammen aus rh-shop, das sein Mail-Modell unabhängig gebaut
+ * hatte und dabei an drei Stellen weiter war:
+ *
+ *   subject       Ein Vorgabe-Betreff je Art. Vorher musste der Betreff
+ *                 entweder leer bleiben oder an der Sendestelle stehen, wo
+ *                 ihn niemand ändern konnte.
+ *   placeholders  Was im Betreff einsetzbar ist. Ohne diese Liste ist ein
+ *                 Betreff-Feld eine Einladung zum Raten.
+ *   lockable      Ob die Mail abgeschaltet werden darf. Eine
+ *                 Bestellbestätigung ist Pflicht, der Schalter dafür wäre
+ *                 eine Falle. Vorgabe true, gesperrt ist die Ausnahme.
  */
 final class MailKind
 {
@@ -36,6 +48,9 @@ final class MailKind
      * @param bool   $default  Vorgabe für den Schalter.
      * @param bool   $urgent   Läuft an der Wellenbremse vorbei.
      * @param string $audience MailMessage::AUDIENCE_*.
+     * @param string $subject  Vorgabe-Betreff, mit {platzhaltern}.
+     * @param bool   $lockable Darf abgeschaltet werden. False bei Pflichtmails.
+     * @param array<int, string> $placeholders Erlaubte Platzhalter ohne Klammern.
      */
     private function __construct(
         public readonly string $id,
@@ -46,11 +61,14 @@ final class MailKind
         public readonly bool $default,
         public readonly bool $urgent,
         public readonly string $audience,
+        public readonly string $subject,
+        public readonly bool $lockable,
+        public readonly array $placeholders,
     ) {
     }
 
     /**
-     * @param array{module: string, label: string, summary?: string, timing?: string, default?: bool, urgent?: bool, audience?: string} $args
+     * @param array{module: string, label: string, summary?: string, timing?: string, default?: bool, urgent?: bool, audience?: string, subject?: string, lockable?: bool, placeholders?: array<int, string>} $args
      */
     public static function register(string $id, array $args): self
     {
@@ -65,6 +83,9 @@ final class MailKind
             (bool) ($args['default'] ?? true),
             (bool) ($args['urgent'] ?? false),
             (string) ($args['audience'] ?? MailMessage::AUDIENCE_INTERNAL),
+            (string) ($args['subject'] ?? ''),
+            (bool) ($args['lockable'] ?? true),
+            array_values(array_map('strval', (array) ($args['placeholders'] ?? []))),
         );
 
         self::$registry[$id] = $kind;
@@ -106,5 +127,22 @@ final class MailKind
     public function isReport(): bool
     {
         return $this->timing === self::TIMING_REPORT;
+    }
+
+    /**
+     * Der Betreff mit eingesetzten Werten.
+     *
+     * @param array<string, string|int|float> $werte Platzhalter ohne Klammern => Wert.
+     */
+    public function fillSubject(string $vorlage, array $werte): string
+    {
+        $vorlage = $vorlage !== '' ? $vorlage : $this->subject;
+
+        foreach ($werte as $name => $wert) {
+            $vorlage = str_replace('{' . $name . '}', (string) $wert, $vorlage);
+        }
+
+        // Was niemand gefüllt hat, soll nicht als {klammer} beim Kunden landen.
+        return trim((string) preg_replace('/\s*\{[a-z0-9_]+\}/i', '', $vorlage));
     }
 }
