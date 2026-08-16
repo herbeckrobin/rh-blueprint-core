@@ -627,6 +627,22 @@
 }
 
 /* ---- Callout, getoente Hinweisbox ------------------------------------ */
+/* Hinweis auf ein fehlendes Pflicht-Modul. Sitzt oben im Reiter, deshalb
+   etwas mehr Luft nach unten, und der Knopf rechts statt im Textfluss. */
+.rhbp-settings .rhbp-dep {
+    align-items: center;
+    margin: 0 0 18px;
+}
+
+.rhbp-settings .rhbp-dep__text {
+    flex: 1 1 auto;
+}
+
+.rhbp-settings .rhbp-dep .rhbp-btn {
+    flex: none;
+    white-space: nowrap;
+}
+
 .rhbp-settings .rhbp-callout {
     display: flex;
     gap: 8px;

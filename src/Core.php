@@ -6,6 +6,7 @@ namespace RhBlueprint\Core;
 
 use RhBlueprint\Core\Admin\AdminAreaGroup;
 use RhBlueprint\Core\Admin\AddonHints;
+use RhBlueprint\Core\Admin\Dependencies;
 use RhBlueprint\Core\Admin\MailPanel;
 use RhBlueprint\Core\Admin\DashboardCleanup;
 use RhBlueprint\Core\Admin\SuitePage;
@@ -71,6 +72,7 @@ final class Core
         (new SupportWidget())->boot();
         (new SuitePage())->boot();
         (new AddonHints())->boot();
+        (new Dependencies())->boot();
         (new MailPanel())->boot();
 
         // Provisioning-Command für White-Label-Sites (ADR 0001). Nur unter CLI.
