@@ -2526,7 +2526,7 @@ body[class*="page_rh-blueprint"] #wpfooter a:hover {
 }
 .rhbp-mail-row__head {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	gap: 12px;
 }
 .rhbp-mail-row__text {
@@ -2543,7 +2543,7 @@ body[class*="page_rh-blueprint"] #wpfooter a:hover {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 	gap: 10px 12px;
-	margin: 12px 0 0 46px;
+	margin: 12px 0 0;
 	/* Die Spalten duerfen schrumpfen, sonst sprengt die Mindestbreite das Raster. */
 	min-width: 0;
 }
@@ -2580,13 +2580,47 @@ body[class*="page_rh-blueprint"] #wpfooter a:hover {
 	min-height: 44px;
 }
 
+/* Eingeklappt, wie im Shop: acht Mails mit je vier offenen Feldern sind
+   nicht mehr zu ueberblicken. Aufgeklappt wird die eine, die man aendern will. */
+.rhbp-mail-row__edit {
+	margin-top: 10px;
+}
+.rhbp-mail-row__edit > summary {
+	cursor: pointer;
+	color: var(--rhbp-blue);
+	font-size: 13px;
+	list-style: none;
+}
+.rhbp-mail-row__edit > summary::-webkit-details-marker {
+	display: none;
+}
+.rhbp-mail-row__edit > summary::before {
+	content: "\203A";
+	display: inline-block;
+	margin-right: 7px;
+	transition: transform .15s ease;
+}
+.rhbp-mail-row__edit[open] > summary::before {
+	transform: rotate(90deg);
+}
+.rhbp-settings .rhbp-mail-row__vars {
+	grid-column: 1 / -1;
+	margin: 0;
+}
+.rhbp-settings .rhbp-mail-row__vars code {
+	font-size: 11px;
+	padding: 1px 5px;
+	background: var(--rhbp-bg-subtle);
+	border-radius: 3px;
+}
+
 /* Was ein Modul dem Sammelbericht anhaengt, im aktuellen Stand. */
 .rhbp-mail-preview {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 8px;
-	margin: 10px 0 0 46px;
+	margin: 10px 0 0;
 	padding: 9px 11px;
 	border-radius: var(--rhbp-radius-sm);
 	background: var(--rhbp-bg-subtle);

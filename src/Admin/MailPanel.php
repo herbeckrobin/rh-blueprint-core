@@ -129,23 +129,13 @@ final class MailPanel
 
         echo '<div class="rhbp-mail-row">';
 
+        // Text links, Schalter rechts: dieselbe Leserichtung wie in den Reihen
+        // von Tracking, Monitoring und Sync. Der Core stand hier als einziger
+        // andersherum.
         echo '<div class="rhbp-mail-row__head">';
-
-        // Eine Pflichtmail bekommt einen gesperrten Schalter statt gar keinem:
-        // so ist zu sehen, dass sie rausgeht, und warum man daran nichts dreht.
-        echo Ui::switch([
-            'name' => $feld . '[enabled]',
-            'checked' => $an,
-            'disabled' => ! $kind->lockable,
-            'title' => $kind->lockable ? '' : __('Diese Mail ist Pflicht und lässt sich nicht abschalten.', 'rh-blueprint-core'),
-        ]);
 
         echo '<div class="rhbp-mail-row__text">';
         echo '<strong>' . esc_html($kind->label) . '</strong>';
-
-        if (! $kind->lockable) {
-            echo ' <span class="rhbp-pill">' . esc_html__('Pflicht', 'rh-blueprint-core') . '</span>';
-        }
 
         if ($kind->urgent) {
             echo ' <span class="rhbp-pill rhbp-pill--warn">' . esc_html__('dringend', 'rh-blueprint-core') . '</span>';
@@ -155,7 +145,17 @@ final class MailPanel
             echo '<div class="rhbp-mail-row__sub">' . esc_html($kind->summary) . '</div>';
         }
 
-        echo '</div></div>';
+        echo '</div>';
+
+        // Eine Pflichtmail zeigt statt eines toten Schalters, dass sie immer
+        // rausgeht. Ein gesperrter Schalter sieht aus wie ein Fehler.
+        if ($kind->lockable) {
+            echo Ui::switch(['name' => $feld . '[enabled]', 'checked' => $an]);
+        } else {
+            echo '<span class="rhbp-pill rhbp-pill--ok">' . esc_html__('immer aktiv', 'rh-blueprint-core') . '</span>';
+        }
+
+        echo '</div>';
 
         // Ein Berichtsbeitrag hat keinen eigenen Empfänger und keinen eigenen
         // Betreff: er ist ein Abschnitt in einer fremden Mail. Statt leerer
@@ -166,6 +166,12 @@ final class MailPanel
 
             return;
         }
+
+        // Eingeklappt: bei acht Mails ist eine Seite mit zweiunddreissig
+        // offenen Feldern nicht mehr zu überblicken. Wer etwas ändern will,
+        // klappt genau die eine Mail auf.
+        echo '<details class="rhbp-mail-row__edit">';
+        echo '<summary>' . esc_html__('Empfänger, Betreff und Text bearbeiten', 'rh-blueprint-core') . '</summary>';
 
         echo '<div class="rhbp-mail-row__fields">';
 
@@ -184,23 +190,11 @@ final class MailPanel
             __('leer: wie beim Mailversand eingestellt', 'rh-blueprint-core')
         );
 
-        $betreffHinweis = __('leer: Vorgabe des Moduls. Die Domain kommt davor.', 'rh-blueprint-core');
-
-        // Ein Betreff-Feld ohne die Liste der Platzhalter ist eine Einladung
-        // zum Raten. Wer {bestellnummer} nicht kennt, schreibt sie auch nicht.
-        if ($kind->placeholders !== []) {
-            $betreffHinweis .= ' ' . sprintf(
-                /* translators: %s: Liste der Platzhalter */
-                __('Einsetzbar: %s', 'rh-blueprint-core'),
-                implode(' ', array_map(static fn (string $p): string => '{' . $p . '}', $kind->placeholders))
-            );
-        }
-
         $this->field(
             $feld . '[subject]',
             __('Betreff', 'rh-blueprint-core'),
             MailSettings::subject($kind->id),
-            $betreffHinweis,
+            __('leer: Vorgabe des Moduls. Die Domain kommt davor.', 'rh-blueprint-core'),
             'text',
             true,
             $kind->subject
@@ -216,7 +210,21 @@ final class MailPanel
         );
         echo '</label>';
 
+        // Ein Betreff-Feld ohne die Liste der Platzhalter ist eine Einladung
+        // zum Raten. Wer {bestellnummer} nicht kennt, schreibt sie auch nicht.
+        if ($kind->placeholders !== []) {
+            echo '<p class="rhbp-field__desc rhbp-mail-row__vars">';
+            echo esc_html__('Platzhalter:', 'rh-blueprint-core') . ' ';
+
+            foreach ($kind->placeholders as $name) {
+                echo '<code>{' . esc_html($name) . '}</code> ';
+            }
+
+            echo '</p>';
+        }
+
         echo '</div>';
+        echo '</details>';
         echo '</div>';
     }
 
