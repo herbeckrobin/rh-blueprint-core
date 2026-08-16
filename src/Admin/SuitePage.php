@@ -50,9 +50,10 @@ final class SuitePage
             ['slug' => 'rh-blocks', 'label' => __('Blöcke', 'rh-blueprint-core'), 'desc' => __('Block-Bibliothek', 'rh-blueprint-core')],
             ['slug' => 'rh-monitor', 'label' => __('Monitoring', 'rh-blueprint-core'), 'desc' => __('Error-Tracking, Health', 'rh-blueprint-core')],
             ['slug' => 'rh-tracking', 'label' => __('Tracking', 'rh-blueprint-core'), 'desc' => __('Umami, GlitchTip', 'rh-blueprint-core')],
-            ['slug' => 'rh-smtp', 'label' => __('SMTP', 'rh-blueprint-core'), 'desc' => __('Mail-Versand', 'rh-blueprint-core')],
+            ['slug' => 'rh-smtp', 'label' => __('SMTP', 'rh-blueprint-core'), 'desc' => __('Versand, Testmodus, Sammelbericht', 'rh-blueprint-core')],
             ['slug' => 'rh-login', 'label' => __('Login', 'rh-blueprint-core'), 'desc' => __('Login-Schutz', 'rh-blueprint-core')],
             ['slug' => 'rh-consent', 'label' => __('Consent', 'rh-blueprint-core'), 'desc' => __('Cookie-Banner', 'rh-blueprint-core')],
+            ['slug' => 'rh-languages', 'label' => __('Sprachen', 'rh-blueprint-core'), 'desc' => __('Mehrsprachigkeit', 'rh-blueprint-core')],
             ['slug' => 'rh-backup', 'label' => __('Backup', 'rh-blueprint-core'), 'desc' => __('Backup & Restore', 'rh-blueprint-core')],
             ['slug' => 'rh-sync', 'label' => __('Sync', 'rh-blueprint-core'), 'desc' => __('Peer-to-Peer Sync', 'rh-blueprint-core')],
         ];
@@ -120,7 +121,9 @@ final class SuitePage
             . "var cfg=" . $cfg . ";"
             . "var form=document.getElementById('rhbp-suite-form');"
             . "if(!form){return;}"
-            . "document.querySelectorAll('.nav-tab.is-ghost').forEach(function(tab){"
+            // Nicht nur die Ghost-Tabs: dieselbe Mechanik bedient auch die
+            // Add-on-Hinweise in den Tabs, die ein fehlendes Modul anbieten.
+            . "document.querySelectorAll('[data-rhbp-module]').forEach(function(tab){"
             . "tab.addEventListener('click',function(e){"
             . "e.preventDefault();"
             . "var slug=tab.getAttribute('data-rhbp-module');"

@@ -533,8 +533,89 @@
             modal.querySelector('[data-success-safety-section]').hidden = true;
         }
 
+        renderSummaryNotes(summary.notes);
+
         setState('success');
         setFooterButtons(['finish']);
+    }
+
+    /**
+     * Meldungen aus Nachlaeufen, die nach dem eigentlichen Vorgang laufen.
+     *
+     * Bewusst allgemein: das aufrufende Modul liefert Titel, Ton, Kennzahlen und Zeilen,
+     * hier wird nur gerendert. Damit braucht der Core kein Wissen darueber, was ein
+     * Nachlauf ueberhaupt tut, und der naechste nutzt dieselbe Schiene.
+     *
+     * Alle Werte gehen ueber textContent ins Dokument: die Zeilen koennen Inhalte aus der
+     * Datenbank enthalten (etwa Beitragstitel), und die sind kein Markup.
+     */
+    function renderSummaryNotes(notes) {
+        const host = modal.querySelector('[data-summary-notes]');
+        if (!host) {
+            return;
+        }
+
+        host.innerHTML = '';
+
+        if (!Array.isArray(notes) || notes.length === 0) {
+            host.hidden = true;
+            return;
+        }
+
+        host.hidden = false;
+
+        notes.forEach((note) => {
+            if (!note || typeof note !== 'object') {
+                return;
+            }
+
+            const section = document.createElement('div');
+            section.className = 'rhbp-sync-modal__section';
+            if (note.tone === 'warn') {
+                section.classList.add('rhbp-sync-modal__section--warn');
+            }
+
+            if (note.title) {
+                const heading = document.createElement('h3');
+                heading.textContent = note.title;
+                section.appendChild(heading);
+            }
+
+            if (Array.isArray(note.stats) && note.stats.length > 0) {
+                const stats = document.createElement('div');
+                stats.className = 'rhbp-sync-modal__summary';
+                note.stats.forEach((stat) => {
+                    if (!stat) {
+                        return;
+                    }
+                    const el = document.createElement('div');
+                    el.className = 'rhbp-stat';
+                    const label = document.createElement('span');
+                    label.className = 'rhbp-stat__label';
+                    label.textContent = stat.label || '';
+                    const value = document.createElement('span');
+                    value.className = 'rhbp-stat__value';
+                    value.textContent = stat.value != null ? String(stat.value) : '';
+                    el.appendChild(label);
+                    el.appendChild(value);
+                    stats.appendChild(el);
+                });
+                section.appendChild(stats);
+            }
+
+            if (Array.isArray(note.items) && note.items.length > 0) {
+                const list = document.createElement('ul');
+                list.className = 'rhbp-sync-modal__note-list';
+                note.items.forEach((item) => {
+                    const li = document.createElement('li');
+                    li.textContent = String(item);
+                    list.appendChild(li);
+                });
+                section.appendChild(list);
+            }
+
+            host.appendChild(section);
+        });
     }
 
     function renderFailure(status) {
@@ -696,14 +777,37 @@
             return;
         }
 
-        // Sub-Tabs im Modal
+        // Sub-Tabs. Die Mechanik lag frueher nur im Modal, deshalb hat sich
+        // jedes Modul mit einer Reiterleiste auf der Seite ein eigenes Skript
+        // geschrieben (rh-seo und rh-shop nennen genau das als Grund).
+        //
+        // Der Bereich ist das Modal oder der naechste Vorfahr, der eine Leiste
+        // als direktes Kind haelt. Das muss ueber die Verschachtelung genau
+        // sein: rh-seo hat eine Leiste im Reiter und eine zweite innerhalb
+        // eines seiner Bereiche. Wer nur bis zum Elternelement der aeusseren
+        // Leiste greift, deaktiviert die innere gleich mit.
         const subtab = e.target.closest('[data-rhbp-subtab]');
         if (subtab) {
-            const modal = subtab.closest('.rhbp-modal');
-            if (modal) {
+            const bereichVon = (el) => {
+                const modal = el.closest('.rhbp-modal');
+                if (modal) return modal;
+                let p = el.parentElement;
+                while (p) {
+                    if (p.querySelector(':scope > [data-rhbp-subtabs]')) return p;
+                    p = p.parentElement;
+                }
+                return null;
+            };
+
+            const scope = bereichVon(subtab);
+            if (scope) {
                 const key = subtab.dataset.rhbpSubtab;
-                modal.querySelectorAll('[data-rhbp-subtab]').forEach((t) => t.classList.toggle('is-active', t === subtab));
-                modal.querySelectorAll('[data-rhbp-pane]').forEach((p) => p.classList.toggle('is-active', p.dataset.rhbpPane === key));
+                scope.querySelectorAll('[data-rhbp-subtab]').forEach((t) => {
+                    if (bereichVon(t) === scope) t.classList.toggle('is-active', t === subtab);
+                });
+                scope.querySelectorAll('[data-rhbp-pane]').forEach((p) => {
+                    if (bereichVon(p) === scope) p.classList.toggle('is-active', p.dataset.rhbpPane === key);
+                });
             }
             return;
         }

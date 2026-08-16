@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace RhBlueprint\Core;
 
 use RhBlueprint\Core\Admin\AdminAreaGroup;
+use RhBlueprint\Core\Admin\AddonHints;
+use RhBlueprint\Core\Admin\MailPanel;
 use RhBlueprint\Core\Admin\DashboardCleanup;
 use RhBlueprint\Core\Admin\SuitePage;
 use RhBlueprint\Core\Admin\SupportGroup;
@@ -68,6 +70,8 @@ final class Core
         (new DashboardCleanup())->boot();
         (new SupportWidget())->boot();
         (new SuitePage())->boot();
+        (new AddonHints())->boot();
+        (new MailPanel())->boot();
 
         // Provisioning-Command für White-Label-Sites (ADR 0001). Nur unter CLI.
         if (defined('WP_CLI') && WP_CLI) {

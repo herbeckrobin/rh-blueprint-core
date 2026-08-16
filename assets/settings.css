@@ -384,8 +384,15 @@
 
 .rhbp-settings .rhbp-field input[type="text"],
 .rhbp-settings .rhbp-field input[type="url"],
+.rhbp-settings .rhbp-field input[type="email"],
+.rhbp-settings .rhbp-field input[type="number"],
+.rhbp-settings .rhbp-field input[type="password"],
 .rhbp-settings .rhbp-field textarea {
+    /* Ohne border-box rechnet der Admin die Polsterung obendrauf, und ein Feld
+       mit width:100% steht ueber den Rand seines Containers hinaus. */
+    box-sizing: border-box;
     width: 100%;
+    max-width: 100%;
     padding: 9px 11px;
     border: 1px solid var(--rhbp-border-strong);
     border-radius: var(--rhbp-radius-sm);
@@ -714,6 +721,16 @@
     font-weight: 600;
     color: var(--rhbp-muted);
     cursor: pointer;
+    /* Die Komponente wird sowohl als <button> als auch als <a> benutzt. Ohne
+       das sind die Link-Varianten unterstrichen und sehen anders aus als die
+       Button-Varianten im Nachbarmodul. Gehört in die Basis, sonst patcht es
+       jedes Modul für sich weg. */
+    text-decoration: none;
+}
+
+.rhbp-settings .rhbp-subtab:focus-visible {
+    outline: 2px solid var(--rhbp-blue);
+    outline-offset: -2px;
 }
 
 .rhbp-settings .rhbp-subtab:hover {
@@ -2263,6 +2280,43 @@ body[class*="page_rh-blueprint"] #wpfooter a:hover {
     font-weight: 500;
 }
 
+/* Aufzaehlungen in Verlaufs-Details und in Nachlauf-Meldungen der Fortschritts-Anzeige.
+   Beide zeigen dasselbe: eine Handvoll Zeilen Klartext zu einem abgeschlossenen Vorgang. */
+.rhbp-history-schedule-list,
+.rhbp-sync-modal__note-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--rhbp-muted);
+}
+
+.rhbp-history-schedule-list li,
+.rhbp-sync-modal__note-list li {
+    padding-left: 12px;
+    position: relative;
+    line-height: 1.5;
+}
+
+.rhbp-history-schedule-list li::before,
+.rhbp-sync-modal__note-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--rhbp-faint);
+}
+
+.rhbp-sync-modal__section--warn h3 {
+    color: var(--rhbp-red-fg);
+}
+
 /* =========================================================================
    Responsive
    ========================================================================= */
@@ -2348,4 +2402,182 @@ body[class*="page_rh-blueprint"] #wpfooter a:hover {
 .rhbp-tabs .nav-tab.is-ghost:hover .rhbp-ghost-add {
 	background: var(--rhbp-blue);
 	color: #fff;
+}
+
+/* Add-on-Hinweise: schmale Zeile am Ende eines Tabs, die auf ein ergaenzendes
+   Modul zeigt. Bewusst leise gehalten, sie steht dauerhaft im Backend des
+   Kunden und darf sich nicht wie Werbung anfuehlen. */
+.rhbp-addon-hint {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 28px 0 0;
+	padding: 10px 12px;
+	border: 1px dashed var(--rhbp-border-strong);
+	border-radius: var(--rhbp-radius-sm);
+	background: var(--rhbp-bg-subtle);
+	color: var(--rhbp-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+.rhbp-addon-hint__text {
+	flex: 1 1 320px;
+}
+.rhbp-addon-hint .rhbp-link {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--rhbp-blue);
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+}
+.rhbp-addon-hint .rhbp-link:hover {
+	color: var(--rhbp-blue-hover);
+	text-decoration: underline;
+}
+.rhbp-addon-hint__dismiss {
+	color: var(--rhbp-faint);
+	font-size: 12px;
+	text-decoration: none;
+}
+.rhbp-addon-hint__dismiss:hover {
+	color: var(--rhbp-muted);
+	text-decoration: underline;
+}
+
+/* ── Mail-Einstellungen ────────────────────────────────────────────────────
+   Eigener Unterreiter im Tab des Moduls. Kein Overlay: es sind mehrere Felder
+   je Mail-Art, das ist kein kurzer Handgriff, fuer den man den Blick auf die
+   Seite aufgibt. Als Unterreiter ist der Bereich ausserdem verlinkbar.
+
+   Eine Zeile je Mail-Art. Kopf mit Schalter und Erklaerung, darunter die
+   Felder, offen und nicht hinter einem zweiten Klick. */
+.rhbp-mail-section__intro {
+	margin: 0 0 18px;
+	color: var(--rhbp-muted);
+}
+.rhbp-mail-section__foot {
+	margin-top: 18px;
+	padding-top: 16px;
+	border-top: 1px solid var(--rhbp-border);
+}
+
+/* Die Reiterleiste eines Tabs sitzt ueber dem Inhalt und braucht etwas mehr
+   Luft nach unten als die Leisten, die Module in ihren Karten rendern. */
+.rhbp-settings .rhbp-subtabs--sections {
+	margin-bottom: 20px;
+}
+.rhbp-mail-group {
+	margin: 18px 0 8px;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	color: var(--rhbp-muted);
+}
+.rhbp-mail-group:first-child {
+	margin-top: 0;
+}
+.rhbp-mail-row {
+	padding: 12px 14px;
+	border: 1px solid var(--rhbp-border);
+	border-radius: var(--rhbp-radius-sm);
+	background: #fff;
+}
+.rhbp-mail-row + .rhbp-mail-row {
+	margin-top: 8px;
+}
+.rhbp-mail-row__head {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+}
+.rhbp-mail-row__text {
+	flex: 1;
+	min-width: 0;
+	font-size: 13px;
+	line-height: 1.45;
+}
+.rhbp-mail-row__sub {
+	margin-top: 2px;
+	color: var(--rhbp-muted);
+}
+.rhbp-mail-row__fields {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	gap: 10px 12px;
+	margin: 12px 0 0 46px;
+	/* Die Spalten duerfen schrumpfen, sonst sprengt die Mindestbreite das Raster. */
+	min-width: 0;
+}
+.rhbp-mail-row__fields > * {
+	min-width: 0;
+}
+/* Die Felder im Mail-Modal nutzen die normale Feld-Komponente. Hier stehen nur
+   die Abweichungen fuers Raster: enger, kleinere Beschriftung, kein
+   Zeilenabstand nach unten (den macht die Rasterluecke). */
+.rhbp-settings .rhbp-mail-row__fields .rhbp-field {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	margin-bottom: 0;
+	min-width: 0;
+	font-size: 12px;
+}
+.rhbp-settings .rhbp-mail-row__fields .rhbp-field--full {
+	grid-column: 1 / -1;
+}
+.rhbp-settings .rhbp-mail-row__fields .rhbp-field__label {
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--rhbp-muted);
+}
+.rhbp-settings .rhbp-mail-row__fields .rhbp-field input,
+.rhbp-settings .rhbp-mail-row__fields .rhbp-field textarea {
+	margin: 0;
+	padding: 7px 10px;
+	font-size: 13px;
+}
+.rhbp-settings .rhbp-mail-row__fields .rhbp-field textarea {
+	resize: vertical;
+	min-height: 44px;
+}
+
+/* Was ein Modul dem Sammelbericht anhaengt, im aktuellen Stand. */
+.rhbp-mail-preview {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 10px 0 0 46px;
+	padding: 9px 11px;
+	border-radius: var(--rhbp-radius-sm);
+	background: var(--rhbp-bg-subtle);
+	font-size: 12px;
+}
+.rhbp-mail-preview__label {
+	color: var(--rhbp-faint);
+	text-transform: uppercase;
+	letter-spacing: .04em;
+	font-size: 11px;
+	font-weight: 600;
+}
+.rhbp-mail-preview__text {
+	color: var(--rhbp-text);
+}
+.rhbp-mail-preview__empty {
+	color: var(--rhbp-faint);
+	font-style: italic;
+}
+.rhbp-modal--wide {
+	max-width: 660px;
+}
+
+@media (max-width: 600px) {
+	.rhbp-mail-row__fields,
+	.rhbp-mail-preview {
+		margin-left: 0;
+	}
 }
