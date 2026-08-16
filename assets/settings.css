@@ -4,6 +4,16 @@
    Radien und Abstaende zentral, alle Module erben davon.
    ========================================================================= */
 
+/* Ein hidden-Attribut muss gewinnen, egal was eine Komponente an display
+   setzt. Sechzehn Klassen hier setzen display:flex oder :grid und ueberstimmen
+   damit die Regel des Browsers, ein leeres Abzeichen blieb so als leerer Punkt
+   stehen. Dasselbe Muster hat frueher schon im Shop die Kachel-Filterung
+   stillgelegt: das Attribut war gesetzt, sichtbar war die Kachel trotzdem.
+   Deshalb einmal zentral, statt es bei jeder neuen Komponente zu vergessen. */
+.rhbp-settings [hidden] {
+    display: none !important;
+}
+
 .rhbp-settings {
     /* WP7-Palette */
     --rhbp-blue: #3858e9;
@@ -366,6 +376,15 @@
 }
 
 /* ---- Field (Label + Input + Hint) ------------------------------------ */
+/* Vier Module setzen diese Klasse, definiert war sie nur in rh-tracking.
+   Solange dessen CSS auf allen Reitern lud, fiel das nicht auf: es hat die
+   anderen stillschweigend mitgestylt. Gehoert zum Feld, also in den Core. */
+.rhbp-settings .rhbp-field__desc {
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--rhbp-muted);
+}
+
 .rhbp-settings .rhbp-field {
     margin-bottom: 18px;
 }

@@ -63,8 +63,7 @@ final class Ui
     /**
      * Ein Symbol. Unbekannte Namen geben das Zahnrad, damit eine Stelle mit
      * Tippfehler sichtbar bleibt statt leer.
-     */
-    /**
+     *
      * @param string $size       Grössenstufe, zurzeit nur 'sm'.
      * @param string $extraClass Zusätzliche Klasse, für Module die eine brauchen.
      */
@@ -187,12 +186,18 @@ final class Ui
      * per JavaScript nachträgt, nichts zum Anfassen, solange sie null ist.
      * Ansprechbar über `[data-rhbp-subtab-badge="KENNUNG"]`.
      *
-     * @param array<string, string> $tabs   Kennung => Beschriftung.
-     * @param array<string, string> $urls   Kennung => Adresse. Leer für JS-Umschaltung.
-     * @param array<string, int>    $badges Kennung => Zahl.
+     * @param array<string, string>     $tabs      Kennung => Beschriftung.
+     * @param array<string, string>     $urls      Kennung => Adresse. Leer für JS-Umschaltung.
+     * @param array<string, int|string> $badges    Kennung => Zahl oder kurzes Zeichen.
+     * @param array<string, string>     $badgeTone Kennung => warn, err oder ok. Vorgabe warn.
      */
-    public static function subtabs(array $tabs, string $active, array $urls = [], array $badges = []): string
-    {
+    public static function subtabs(
+        array $tabs,
+        string $active,
+        array $urls = [],
+        array $badges = [],
+        array $badgeTone = []
+    ): string {
         if ($tabs === []) {
             return '';
         }
@@ -204,12 +209,18 @@ final class Ui
             $inhalt = esc_html($label);
 
             if (array_key_exists($key, $badges)) {
-                $zahl = (int) $badges[$key];
+                // Meist eine Zahl, manchmal ein Zeichen wie "!". Beides wird
+                // escapt, hier kommt kein Markup durch.
+                $wert = (string) $badges[$key];
+                $leer = $wert === '' || $wert === '0';
+                $ton = (string) ($badgeTone[$key] ?? 'warn');
+
                 $inhalt .= sprintf(
-                    ' <span class="rhbp-pill rhbp-pill--warn" data-rhbp-subtab-badge="%s"%s>%s</span>',
+                    ' <span class="rhbp-pill rhbp-pill--%s" data-rhbp-subtab-badge="%s"%s>%s</span>',
+                    esc_attr($ton),
                     esc_attr($key),
-                    $zahl > 0 ? '' : ' hidden',
-                    esc_html((string) $zahl)
+                    $leer ? ' hidden' : '',
+                    esc_html($wert)
                 );
             }
 
@@ -252,46 +263,103 @@ final class Ui
     /**
      * Kopf eines Dialogs samt Rahmen.
      *
-     * Enthält alles, was leicht vergessen wird: die Rolle, aria-modal und den
-     * Knopf zum Zumachen samt Beschriftung.
+     * Enthält alles, was leicht vergessen wird: die Rolle, aria-modal, einen
+     * Namen und den Knopf zum Zumachen samt Beschriftung. Genau daran fehlte
+     * es an acht der siebzehn bestehenden Stellen.
+     *
+     * Als Optionsfeld, weil die Hüllen sich in sechs Merkmalen unterscheiden.
+     * Die vorherige Fassung hatte sieben Positionsparameter und passte trotzdem
+     * nur auf gut die Hälfte:
+     *
+     *   id            Kennung der Hülle, Ziel von data-rhbp-modal-open.
+     *   title         Überschrift und, wenn kein titleId gesetzt ist, der Name.
+     *   subtitle      Zeile unter der Überschrift.
+     *   icon          Symbolname. Leer lässt den Platz weg.
+     *   iconMarkup    Fertiges Markup statt eines Symbols, etwa ein Logo. Wird
+     *                 roh ausgegeben, also nur mit selbst gebautem Inhalt.
+     *   tone          Färbt das Symbol: ok, err.
+     *   open          Von Anfang an offen.
+     *   class         Zusätzliche Klasse am Dialog.
+     *   backdropClass Zusätzliche Klasse an der Hülle.
+     *   backdropAttrs Weitere Attribute an der Hülle, für modul-eigenes JS.
+     *   titleTag      h2 oder h3, Vorgabe h3.
+     *   titleId       Setzt aria-labelledby statt aria-label.
+     *   titleAttrs    Weitere Attribute an der Überschrift, als Anker für JS.
+     *   form          Adresse für ein Formular, das den ganzen Dialog umschliesst.
+     *                 Ohne das läge ein Knopf im Fuss ausserhalb des Formulars.
      *
      * Das `data-rhbp-modal-backdrop` wertet zurzeit niemand aus, das Core-JS
      * erkennt die Hülle an ihrer Klasse. Es steht an zwölf der siebzehn
      * bestehenden Stellen und bleibt deshalb hier drin: eine Marke, die
      * mancherorts fehlt, verwirrt mehr als eine, die überall steht.
      *
-     * @param string $tone Färbt das Symbol: ok, err oder leer.
+     * @param array<string, mixed> $opt
      */
-    public static function modalOpen(
-        string $id,
-        string $title,
-        string $subtitle = '',
-        string $icon = 'gear',
-        string $tone = '',
-        bool $open = false,
-        string $extraClass = ''
-    ): string {
-        $iconClass = 'rhbp-modal__head-icon' . ($tone !== '' ? ' rhbp-modal__head-icon--' . $tone : '');
+    public static function modalOpen(array $opt): string
+    {
+        $id = (string) ($opt['id'] ?? '');
+        $title = (string) ($opt['title'] ?? '');
+        $subtitle = (string) ($opt['subtitle'] ?? '');
+        $icon = array_key_exists('icon', $opt) ? (string) $opt['icon'] : 'gear';
+        $iconMarkup = (string) ($opt['iconMarkup'] ?? '');
+        $tone = (string) ($opt['tone'] ?? '');
+        $klasse = (string) ($opt['class'] ?? '');
+        $huelleKlasse = (string) ($opt['backdropClass'] ?? '');
+        $titleTag = ($opt['titleTag'] ?? 'h3') === 'h2' ? 'h2' : 'h3';
+        $titleId = (string) ($opt['titleId'] ?? '');
+        $titleAttrs = (string) ($opt['titleAttrs'] ?? '');
+        $form = (string) ($opt['form'] ?? '');
+
+        $huelleAttrs = '';
+
+        /** @var array<string, mixed> $weitere */
+        $weitere = is_array($opt['backdropAttrs'] ?? null) ? $opt['backdropAttrs'] : [];
+
+        foreach ($weitere as $key => $value) {
+            $huelleAttrs .= $value === true
+                ? ' ' . esc_attr((string) $key)
+                : sprintf(' %s="%s"', esc_attr((string) $key), esc_attr((string) $value));
+        }
 
         // Kein hidden-Attribut: das CSS versteckt die Hülle über display:none
         // und zeigt sie über die Klasse is-open. Ein zweiter Mechanismus
         // daneben wäre eine Stelle mehr, an der die beiden auseinanderlaufen.
         $html = sprintf(
-            '<div class="rhbp-modal-backdrop%s" id="%s" data-rhbp-modal-backdrop>',
-            $open ? ' is-open' : '',
-            esc_attr($id)
+            '<div class="rhbp-modal-backdrop%s%s"%s data-rhbp-modal-backdrop%s>',
+            $huelleKlasse !== '' ? ' ' . esc_attr($huelleKlasse) : '',
+            ! empty($opt['open']) ? ' is-open' : '',
+            $id !== '' ? ' id="' . esc_attr($id) . '"' : '',
+            $huelleAttrs // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- oben escapt.
         );
 
         $html .= sprintf(
-            '<div class="rhbp-modal%s" role="dialog" aria-modal="true" aria-label="%s">',
-            $extraClass !== '' ? ' ' . esc_attr($extraClass) : '',
-            esc_attr($title)
+            '<div class="rhbp-modal%s" role="dialog" aria-modal="true" %s="%s">',
+            $klasse !== '' ? ' ' . esc_attr($klasse) : '',
+            $titleId !== '' ? 'aria-labelledby' : 'aria-label',
+            esc_attr($titleId !== '' ? $titleId : $title)
         );
 
+        if ($form !== '') {
+            $html .= '<form method="post" action="' . esc_url($form) . '">';
+        }
+
         $html .= '<div class="rhbp-modal__head"><div class="rhbp-modal__head-l">';
-        $html .= '<span class="' . esc_attr($iconClass) . '">' . self::icon($icon) . '</span>';
+
+        if ($iconMarkup !== '') {
+            $html .= $iconMarkup; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup des Moduls.
+        } elseif ($icon !== '') {
+            $iconClass = 'rhbp-modal__head-icon' . ($tone !== '' ? ' rhbp-modal__head-icon--' . $tone : '');
+            $html .= '<span class="' . esc_attr($iconClass) . '">' . self::icon($icon) . '</span>';
+        }
+
         $html .= '<div>';
-        $html .= '<h3 class="rhbp-modal__title">' . esc_html($title) . '</h3>';
+        $html .= sprintf(
+            '<%1$s class="rhbp-modal__title"%2$s%3$s>%4$s</%1$s>',
+            $titleTag,
+            $titleId !== '' ? ' id="' . esc_attr($titleId) . '"' : '',
+            $titleAttrs !== '' ? ' ' . $titleAttrs : '',
+            esc_html($title)
+        );
 
         if ($subtitle !== '') {
             $html .= '<p class="rhbp-modal__sub">' . esc_html($subtitle) . '</p>';
@@ -311,25 +379,65 @@ final class Ui
     /**
      * Schliesst den Rumpf und setzt die Fusszeile.
      *
-     * @param string $primary Beschriftung des bestätigenden Knopfes. Leer: nur zumachen.
+     *   primary       Beschriftung des bestätigenden Knopfes. Leer: nur zumachen.
+     *   primaryAttrs  Weitere Attribute an diesem Knopf.
+     *   cancel        Beschriftung des abbrechenden Knopfes.
+     *   foot          false lässt die Fusszeile ganz weg. Für Dialoge, deren
+     *                 Karten je einen eigenen Knopf mitbringen.
+     *   form          Muss gesetzt sein, wenn modalOpen ein Formular geöffnet hat.
+     *   extra         Markup zwischen Ausgang und Bestätigung, roh.
+     *
+     * @param array<string, mixed> $opt
      */
-    public static function modalClose(string $primary = '', string $primaryAttrs = ''): string
+    public static function modalClose(array $opt = []): string
     {
+        $primary = (string) ($opt['primary'] ?? '');
+        $primaryAttrs = (string) ($opt['primaryAttrs'] ?? '');
+        $extra = (string) ($opt['extra'] ?? '');
+
+        if (array_key_exists('foot', $opt) && $opt['foot'] === false) {
+            return '</div>' . (! empty($opt['form']) ? '</form>' : '') . '</div></div>';
+        }
+
         $html = '</div><div class="rhbp-modal__foot">';
+
+        $abbruch = (string) ($opt['cancel'] ?? '');
+
+        if ($abbruch === '') {
+            $abbruch = $primary === ''
+                ? __('Fertig', 'rh-blueprint-core')
+                : __('Abbrechen', 'rh-blueprint-core');
+        }
 
         $html .= sprintf(
             '<button type="button" class="rhbp-btn" data-rhbp-modal-close>%s</button>',
-            esc_html($primary === '' ? __('Fertig', 'rh-blueprint-core') : __('Abbrechen', 'rh-blueprint-core'))
+            esc_html($abbruch)
         );
 
+        // Zwischen Ausgang und Bestaetigung: weitere Knoepfe des Moduls.
+        if ($extra !== '') {
+            $html .= $extra; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup des Moduls.
+        }
+
         if ($primary !== '') {
+            // Nicht jeder Dialog schickt ein Formular ab, manche speichern
+            // über einen eigenen Aufruf. Dann darf der Knopf kein submit sein.
+            $typ = ($opt['primaryType'] ?? 'submit') === 'button' ? 'button' : 'submit';
+
             $html .= sprintf(
-                '<button type="submit" class="rhbp-btn rhbp-btn--primary"%s>%s</button>',
+                '<button type="%s" class="rhbp-btn rhbp-btn--primary"%s>%s</button>',
+                $typ,
                 $primaryAttrs !== '' ? ' ' . $primaryAttrs : '',
                 esc_html($primary)
             );
         }
 
-        return $html . '</div></div></div>';
+        $html .= '</div>';
+
+        if (! empty($opt['form'])) {
+            $html .= '</form>';
+        }
+
+        return $html . '</div></div>';
     }
 }

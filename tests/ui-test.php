@@ -97,7 +97,13 @@ $t->pruefe(Ui::subtabs([], 'x') === '', 'ohne Reiter kommt keine leere Leiste');
 
 // --- Dialog -----------------------------------------------------------------
 
-$dialog = Ui::modalOpen('mein-dialog', 'Titel', 'Untertitel', 'mail', 'ok') . 'Inhalt' . Ui::modalClose('Speichern');
+$dialog = Ui::modalOpen([
+    'id' => 'mein-dialog',
+    'title' => 'Titel',
+    'subtitle' => 'Untertitel',
+    'icon' => 'mail',
+    'tone' => 'ok',
+]) . 'Inhalt' . Ui::modalClose(['primary' => 'Speichern']);
 
 foreach ([
     'data-rhbp-modal-backdrop' => 'der Klick daneben kann zumachen',
@@ -122,13 +128,61 @@ $t->pruefe(
 );
 
 $t->pruefe(
-    str_contains(Ui::modalOpen('x', 'Titel', '', 'gear', '', true), 'is-open'),
+    str_contains(Ui::modalOpen(['id' => 'x', 'title' => 'Titel', 'open' => true]), 'is-open'),
     'ein von Anfang an offener Dialog ist offen'
 );
 
 $t->pruefe(
     ! str_contains(Ui::modalClose(), 'type="submit"'),
     'ohne bestätigenden Knopf gibt es keinen Absende-Knopf'
+);
+
+// Die Merkmale, an denen die siebzehn bestehenden Hüllen sich unterscheiden.
+// Ohne sie passt der Baustein nur auf gut die Hälfte.
+$mitForm = Ui::modalOpen(['id' => 'f', 'title' => 'T', 'form' => 'https://x.test/post'])
+    . 'Inhalt' . Ui::modalClose(['primary' => 'Speichern', 'form' => true]);
+
+$t->pruefe(
+    substr_count($mitForm, '<form') === 1 && substr_count($mitForm, '</form>') === 1,
+    'ein Formular wird geöffnet und wieder geschlossen'
+);
+$t->pruefe(
+    strpos($mitForm, '<form') < strpos($mitForm, 'rhbp-modal__head')
+    && strpos($mitForm, '</form>') > strpos($mitForm, 'type="submit"'),
+    'das Formular umschliesst Kopf und Fuss, der Absende-Knopf liegt darin'
+);
+
+$t->pruefe(
+    str_contains(Ui::modalOpen(['id' => 'x', 'title' => 'T', 'titleTag' => 'h2']), '<h2 class="rhbp-modal__title"'),
+    'die Überschriftsebene ist wählbar'
+);
+
+$mitId = Ui::modalOpen(['id' => 'x', 'title' => 'T', 'titleId' => 'mein-titel']);
+$t->pruefe(
+    str_contains($mitId, 'aria-labelledby="mein-titel"') && ! str_contains($mitId, 'aria-label="T"'),
+    'mit einer Titel-Kennung verweist der Dialog darauf statt den Text zu wiederholen'
+);
+
+$eigen = Ui::modalOpen([
+    'title' => 'T',
+    'backdropClass' => 'mein-overlay',
+    'backdropAttrs' => ['data-mein-modal' => true],
+    'class' => 'mein-dialog',
+    'icon' => '',
+]);
+$t->pruefe(str_contains($eigen, 'rhbp-modal-backdrop mein-overlay'), 'eigene Klasse an der Hülle');
+$t->pruefe(str_contains($eigen, ' data-mein-modal'), 'eigenes Attribut an der Hülle für modul-eigenes JS');
+$t->pruefe(! str_contains($eigen, ' id='), 'ohne Kennung kommt kein leeres id-Attribut');
+$t->pruefe(! str_contains($eigen, 'rhbp-modal__head-icon'), 'ohne Symbol bleibt der Platz weg');
+
+$t->pruefe(
+    str_contains(Ui::modalOpen(['title' => 'T', 'iconMarkup' => '<img src="logo.svg" alt="">']), '<img src="logo.svg"'),
+    'statt eines Symbols geht auch fertiges Markup, etwa ein Logo'
+);
+
+$t->pruefe(
+    str_contains(Ui::modalClose(['cancel' => 'Verwerfen']), '>Verwerfen<'),
+    'die Beschriftung des abbrechenden Knopfes ist wählbar'
 );
 
 // --- Bytes ------------------------------------------------------------------
