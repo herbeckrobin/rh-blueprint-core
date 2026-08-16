@@ -79,4 +79,25 @@ $t->pruefe(MailKind::get('gibtesnicht') === null, 'eine unbekannte Kennung gibt 
 $t->pruefe(MailKind::moduleHasMail('shop'), 'das Modul verschickt etwas');
 $t->pruefe(! MailKind::moduleHasMail('motion'), 'ein Modul ohne Anmeldung verschickt nichts');
 
+// --- Der Weg durch MailMessage ----------------------------------------------
+
+// Die Platzhalter reisen an der Nachricht mit, nicht am Betreff: der Betreff
+// steht in den Einstellungen, die Werte kennt erst der Aufrufer.
+$m = new RhBlueprint\Core\Mail\MailMessage('Titel');
+$m->kind('shop.confirmation');
+$m->placeholders(['bestellnummer' => 'RH-000042', 'name' => 'Robin']);
+
+$t->pruefe(
+    $m->placeholderValues() === ['bestellnummer' => 'RH-000042', 'name' => 'Robin'],
+    'die Werte hängen an der Nachricht'
+);
+$t->pruefe($m->kindId() === 'shop.confirmation', 'und die Art auch');
+
+$m2 = new RhBlueprint\Core\Mail\MailMessage('Titel');
+$t->pruefe($m2->placeholderValues() === [], 'ohne Angabe ist die Liste leer, nicht null');
+
+$m3 = new RhBlueprint\Core\Mail\MailMessage('Titel');
+$m3->placeholders(['zahl' => 7]);
+$t->pruefe($m3->placeholderValues() === ['zahl' => '7'], 'Zahlen werden zu Zeichenketten');
+
 $t->abschluss();

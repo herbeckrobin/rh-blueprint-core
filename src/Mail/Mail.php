@@ -47,14 +47,29 @@ final class Mail
                 $to = $eigenerEmpfaenger;
             }
 
+            $kind = MailKind::get($kindId);
+            $werte = $message->placeholderValues();
+
             $eigenerBetreff = MailSettings::subject($kindId);
+
+            // Reihenfolge: was der Betreiber gepflegt hat, sonst die Vorgabe
+            // der Mail-Art, sonst was der Aufrufer mitgibt.
+            if ($eigenerBetreff === '' && $kind !== null && $kind->subject !== '') {
+                $eigenerBetreff = $kind->subject;
+            }
+
             if ($eigenerBetreff !== '') {
-                $subject = $eigenerBetreff;
+                // Platzhalter füllen. Ohne das steht "{bestellnummer}" wörtlich
+                // im Postfach, und genau das ist der Grund, warum der Core
+                // diesen Schritt braucht und nicht nur ein Textfeld.
+                $subject = $kind !== null
+                    ? $kind->fillSubject($eigenerBetreff, $werte)
+                    : self::fillPlaceholders($eigenerBetreff, $werte);
             }
 
             $zusatz = MailSettings::note($kindId);
             if ($zusatz !== '') {
-                $message->muted($zusatz);
+                $message->muted(self::fillPlaceholders($zusatz, $werte));
             }
         }
 
@@ -149,6 +164,20 @@ final class Mail
                 case 'divider':
                     $lines[] = str_repeat('.', 40);
                     break;
+
+                case 'html':
+                    // Fertiges HTML eines Moduls. Für die Nur-Text-Fassung
+                    // werden die Tags entfernt, sonst steht im Postfach eines
+                    // Nur-Text-Lesers eine Wand aus Markup.
+                    $klartext = wp_strip_all_tags(
+                        str_replace(['</p>', '<br>', '<br/>', '<br />', '</tr>'], "\n", (string) ($block['html'] ?? ''))
+                    );
+                    $klartext = trim((string) preg_replace('/\n{3,}/', "\n\n", $klartext));
+
+                    if ($klartext !== '') {
+                        $lines[] = $klartext;
+                    }
+                    break;
             }
         }
 
@@ -193,6 +222,20 @@ final class Mail
         $subject = (string) preg_replace('/^\[[^\]]+\]\s*/', '', $subject);
 
         return '[' . $host . '] ' . $subject;
+    }
+
+    /**
+     * Setzt Platzhalter ein und entfernt, was niemand gefüllt hat.
+     *
+     * @param array<string, string> $werte
+     */
+    private static function fillPlaceholders(string $vorlage, array $werte): string
+    {
+        foreach ($werte as $name => $wert) {
+            $vorlage = str_replace('{' . $name . '}', $wert, $vorlage);
+        }
+
+        return trim((string) preg_replace('/\s*\{[a-z0-9_]+\}/i', '', $vorlage));
     }
 
     public static function host(): string

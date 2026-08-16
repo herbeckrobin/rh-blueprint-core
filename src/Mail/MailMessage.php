@@ -49,6 +49,9 @@ final class MailMessage
      * @param string $title    Überschrift im Kopf der Mail.
      * @param string $subtitle Kleine Zeile darunter, in der Regel die Domain.
      */
+    /** @var array<string, string> */
+    private array $placeholders = [];
+
     public function __construct(
         public readonly string $title,
         public readonly string $subtitle = '',
@@ -94,6 +97,31 @@ final class MailMessage
         }
 
         return $this;
+    }
+
+    /**
+     * Werte für die Platzhalter in Betreff und Zusatztext.
+     *
+     * Ohne die bleibt ein gepflegter Betreff wie "Deine Bestellung
+     * {bestellnummer}" genau so im Postfach stehen. rh-shop hatte das gelöst,
+     * der Core kannte es nicht: dort war der Betreff eine Zeichenkette, die
+     * niemand mehr angefasst hat.
+     *
+     * @param array<string, string|int|float> $werte Name ohne Klammern => Wert.
+     */
+    public function placeholders(array $werte): self
+    {
+        $this->placeholders = array_map('strval', $werte);
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function placeholderValues(): array
+    {
+        return $this->placeholders;
     }
 
     public function kindId(): string
