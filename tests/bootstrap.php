@@ -67,6 +67,13 @@ if (! function_exists('esc_attr__')) {
     }
 }
 
+if (! function_exists('esc_html__')) {
+    function esc_html__(string $text, string $domain = ''): string
+    {
+        return esc_html($text);
+    }
+}
+
 if (! function_exists('number_format_i18n')) {
     function number_format_i18n(float $zahl, int $stellen = 0): string
     {
