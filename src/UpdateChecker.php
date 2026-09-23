@@ -84,6 +84,12 @@ final class UpdateChecker
             $this->slug
         );
 
+        $token = self::githubToken();
+
+        if ($token !== '') {
+            $checker->setAuthentication($token);
+        }
+
         $api = $checker->getVcsApi();
 
         if ($api !== null && method_exists($api, 'enableReleaseAssets')) {
@@ -93,6 +99,36 @@ final class UpdateChecker
         }
 
         add_action('upgrader_process_complete', [$this, 'afterUpdate'], 10, 2);
+    }
+
+    /**
+     * GitHub-Token für die Update-Prüfung, leer wenn keiner hinterlegt ist.
+     *
+     * Ohne Token erlaubt GitHub 60 API-Anfragen je Stunde und IP. Alle Sites
+     * eines Servers teilen sich dieses Kontingent, und ein Modul braucht pro
+     * Prüfung mehrere Anfragen. Auf hosting-01 war es deshalb dauerhaft
+     * erschöpft, keine Site sah mehr ein Update. Mit Token gelten 5.000 je
+     * Stunde und Token.
+     *
+     * Die Repos sind öffentlich, ein Fine-grained Token ohne jede Berechtigung
+     * reicht. Vorgesehen ist die Umgebungsvariable RH_GITHUB_TOKEN im
+     * Container (in Coolify als Team-Variable, Ablauf im README). Notnagel ist
+     * die gleichnamige Konstante in der wp-config.php, sie hat Vorrang. Nie in
+     * die Datenbank und nie ins Repo.
+     */
+    public static function githubToken(): string
+    {
+        if (defined('RH_GITHUB_TOKEN') && is_string(constant('RH_GITHUB_TOKEN'))) {
+            $token = trim((string) constant('RH_GITHUB_TOKEN'));
+
+            if ($token !== '') {
+                return $token;
+            }
+        }
+
+        $umgebung = getenv('RH_GITHUB_TOKEN');
+
+        return is_string($umgebung) ? trim($umgebung) : '';
     }
 
     /**

@@ -72,6 +72,35 @@ if ($anderes->shouldReset(['action' => 'update', 'type' => 'plugin', 'plugins' =
     echo "  ok   jedes Modul reagiert nur auf sein eigenes Update\n";
 }
 
+// Token-Quelle. Reihenfolge der Fälle ist fest: eine Konstante lässt sich
+// nicht wieder entfernen, deshalb kommt sie zuletzt.
+$tokenFaelle = [];
+
+putenv('RH_GITHUB_TOKEN');
+$tokenFaelle['ohne Token leer'] = [UpdateChecker::githubToken(), ''];
+
+putenv('RH_GITHUB_TOKEN=   ');
+$tokenFaelle['nur Leerzeichen gilt als kein Token'] = [UpdateChecker::githubToken(), ''];
+
+putenv('RH_GITHUB_TOKEN= aus-der-umgebung ');
+$tokenFaelle['Umgebungsvariable, getrimmt'] = [UpdateChecker::githubToken(), 'aus-der-umgebung'];
+
+define('RH_GITHUB_TOKEN', 'aus-der-konstante');
+$tokenFaelle['Konstante hat Vorrang'] = [UpdateChecker::githubToken(), 'aus-der-konstante'];
+
+putenv('RH_GITHUB_TOKEN');
+
+foreach ($tokenFaelle as $name => [$ist, $erwartet]) {
+    if ($ist === $erwartet) {
+        echo "  ok   $name\n";
+        continue;
+    }
+
+    echo '  FEHL ' . $name . ': erwartet ' . var_export($erwartet, true)
+        . ', bekommen ' . var_export($ist, true) . "\n";
+    $fehler++;
+}
+
 if ($fehler > 0) {
     echo "\n$fehler Fehler.\n";
     exit(1);
