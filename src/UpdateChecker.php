@@ -84,6 +84,14 @@ final class UpdateChecker
             $this->slug
         );
 
+        // Während GitHub das Kontingent verweigert, gar nicht erst prüfen.
+        // Eine gescheiterte Prüfung würde sonst das schon bekannte Update aus
+        // dem Speicher der Bibliothek werfen.
+        GitHubRateLimit::register($this->owner);
+        add_filter('puc_check_now-' . $this->slug, static function ($shouldCheck) {
+            return $shouldCheck && ! GitHubRateLimit::isPaused(time());
+        });
+
         $token = self::githubToken();
 
         if ($token !== '') {

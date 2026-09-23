@@ -36,6 +36,8 @@ add_action('rh-blueprint/core/booted', function ($core) {
 
 Die Module holen ihre Updates über die GitHub-API. Ohne Token erlaubt GitHub 60 Anfragen je Stunde und IP, und alle Sites eines Servers teilen sich dieses Kontingent. Eine Prüfung kostet pro Modul drei Anfragen, bei 17 Modulen ist das Kontingent nach einer einzigen Site weg und keine Site sieht mehr ein Update.
 
+Ohne Token greift eine Bremse: antwortet GitHub mit einem Rate-Limit-403, pausieren alle Modul-Prüfungen der Site bis zum Zeitpunkt, den GitHub für den Reset nennt (höchstens eine Stunde). Das schont das gemeinsame Kontingent der anderen Sites auf derselben IP und lässt das zuletzt bekannte Update stehen, hebt die 60er-Grenze aber nicht auf.
+
 Mit Token gelten 5.000 Anfragen je Stunde. Ein Fine-grained Token mit Zugriff „Public repositories (read-only)“ und ohne weitere Berechtigung reicht, die Repos sind öffentlich. Nie in die Datenbank, nie ins Repo. Ohne Token verhält sich die Prüfung wie bisher.
 
 Vorgesehen ist die Umgebungsvariable `RH_GITHUB_TOKEN` im Container. Im Image `wordpress:latest` läuft PHP als Apache-Modul (`apache2handler`, kein PHP-FPM), `getenv()` sieht die Container-Umgebung dort direkt.
