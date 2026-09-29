@@ -99,9 +99,22 @@
         });
     }
 
+    /**
+     * Beim Pull ist der Peer die Quelle, beim Push das Ziel. Texte, die davon abhängen,
+     * liefert das Modul in beiden Fassungen, markiert mit data-for-direction. Sichtbar
+     * bleibt nur die der aktuellen Richtung. Markup ohne Markierung bleibt unberührt.
+     */
+    function setDirection(action) {
+        modal.dataset.direction = action;
+        modal.querySelectorAll('[data-for-direction]').forEach((el) => {
+            el.hidden = el.dataset.forDirection !== action;
+        });
+    }
+
     function openModal(action, peerId, peerName) {
         modalAction = action;
         activePeer = { id: peerId, name: peerName };
+        setDirection(action);
 
         modal.hidden = false;
         document.body.style.overflow = 'hidden';
@@ -210,7 +223,8 @@
             const data = await ajax('rhbp_peer_preflight', { peer_id: peerId }, 'GET');
             renderPreflight(data);
         } catch (err) {
-            renderError('Verbindung zur Quelle fehlgeschlagen', err.message, 'manifest');
+            const gegenseite = modalAction === 'push' ? 'zum Ziel' : 'zur Quelle';
+            renderError('Verbindung ' + gegenseite + ' fehlgeschlagen', err.message, 'manifest');
         }
     }
 
@@ -486,7 +500,8 @@
         setIcon('success', 'yes-alt');
         const verb = modalAction === 'pull' ? 'Pull' : 'Push';
         modal.querySelector('[data-modal-title]').textContent = verb + ' erfolgreich';
-        modal.querySelector('[data-modal-subtitle]').textContent = 'Von „' + activePeer.name + '"';
+        const dir = modalAction === 'pull' ? 'Von' : 'Zu';
+        modal.querySelector('[data-modal-subtitle]').textContent = dir + ' „' + activePeer.name + '"';
 
         const summary = status.summary || {};
         const sumEl = modal.querySelector('[data-summary]');
