@@ -107,6 +107,12 @@ final class UpdateChecker
         }
 
         add_action('upgrader_process_complete', [$this, 'afterUpdate'], 10, 2);
+
+        // Mit Branding verraten "Details ansehen" und "Nach Updates suchen" in der
+        // Plugin-Liste die Herkunft. Nur die Links verschwinden, die Updates laufen weiter.
+        $hideLink = static fn($text) => Branding\Branding::isActive() ? '' : $text;
+        add_filter('puc_view_details_link-' . $this->slug, $hideLink);
+        add_filter('puc_manual_check_link-' . $this->slug, $hideLink);
     }
 
     /**

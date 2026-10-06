@@ -9,6 +9,7 @@ Geteilter Core für die rh-blueprint Plugin-Kollektion. Keine eigenständige Ins
 - **Settings-Framework**, eine geteilte Settings-Page, an der Plugins Tabs und Gruppen anmelden.
 - **Environment-Helper**, Wrapper um `wp_get_environment_type()` für sichere Defaults.
 - **Marken-Basics**, Dashboard-Cleanup und Support-Box.
+- **White-Label-Branding** (ab 2.9), Name, Icon, Untertitel, Autor und Beschreibungs-Zusatz für Menü, Seitenkopf, Dashboard-Widget und die Plugin-Liste aller Module. Option `rhbp_branding`, Filter `rh-blueprint/branding`, Helper `rhbp_branding_active()` und `rhbp_brand('name', 'RH')`. Module prüfen den Helper mit `function_exists`, weil ein älterer Core gewinnen kann.
 
 ## Einbinden in ein Plugin
 

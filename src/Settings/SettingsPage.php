@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace RhBlueprint\Core\Settings;
 
+use RhBlueprint\Core\Branding\Branding;
+
 /**
  * Die geteilte "RH Blueprint" Settings-Page unter Einstellungen.
  *
@@ -50,9 +52,11 @@ final class SettingsPage
 
     public function registerMenu(): void
     {
+        $title = Branding::value('name', __('RH Blueprint', 'rh-blueprint-core'));
+
         add_menu_page(
-            __('RH Blueprint', 'rh-blueprint-core'),
-            __('RH Blueprint', 'rh-blueprint-core'),
+            $title,
+            $title,
             self::CAPABILITY,
             self::MENU_SLUG,
             [$this, 'render'],
@@ -82,6 +86,10 @@ final class SettingsPage
      */
     private function menuIcon(): string
     {
+        if (Branding::value('icon') !== '') {
+            return Branding::menuIcon('dashicons-layout');
+        }
+
         $svg = rtrim(\rh_blueprint()->dir(), '/') . '/assets/menu-icon.svg';
         if (is_readable($svg)) {
             $contents = (string) file_get_contents($svg);
@@ -265,13 +273,23 @@ JS;
         echo $this->logoMarkup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         echo '</div>';
         echo '<div class="rhbp-settings__title">';
-        echo '<h1>' . esc_html__('RH Blueprint', 'rh-blueprint-core') . '</h1>';
-        echo '<p>' . esc_html__('Zentrale Steuerung deiner rh-blueprint Module. Allgemeine Einstellungen, Backups und Sync an einem Ort.', 'rh-blueprint-core') . '</p>';
+        echo '<h1>' . esc_html(Branding::value('name', __('RH Blueprint', 'rh-blueprint-core'))) . '</h1>';
+
+        // Mit Branding nur der eigene Untertitel, der Standardtext nennt die Kollektion.
+        $subtitle = Branding::isActive()
+            ? Branding::value('subtitle')
+            : __('Zentrale Steuerung deiner rh-blueprint Module. Allgemeine Einstellungen, Backups und Sync an einem Ort.', 'rh-blueprint-core');
+        if ($subtitle !== '') {
+            echo '<p>' . esc_html($subtitle) . '</p>';
+        }
         echo '</div>';
-        printf(
-            '<span class="rhbp-settings__version">v%s</span>',
-            esc_html(\rh_blueprint()->version())
-        );
+
+        if (! Branding::isActive() || Branding::get()['show_version']) {
+            printf(
+                '<span class="rhbp-settings__version">v%s</span>',
+                esc_html(\rh_blueprint()->version())
+            );
+        }
         echo '</div>';
     }
 
@@ -280,6 +298,10 @@ JS;
      */
     private function logoMarkup(): string
     {
+        if (Branding::value('icon') !== '') {
+            return Branding::iconMarkup('');
+        }
+
         $svg = rtrim(\rh_blueprint()->dir(), '/') . '/assets/menu-icon.svg';
         if (is_readable($svg)) {
             $contents = (string) file_get_contents($svg);

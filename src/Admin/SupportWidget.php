@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RhBlueprint\Core\Admin;
 
+use RhBlueprint\Core\Branding\Branding;
 use RhBlueprint\Core\Settings\SettingsPage;
 
 /**
@@ -60,7 +61,7 @@ final class SupportWidget
 
         wp_add_dashboard_widget(
             self::WIDGET_ID,
-            __('RH Blueprint', 'rh-blueprint-core'),
+            Branding::value('name', __('RH Blueprint', 'rh-blueprint-core')),
             [$this, 'render']
         );
 
@@ -240,9 +241,10 @@ final class SupportWidget
 
     private function getInitials(string $name): string
     {
+        $fallback = self::initialsOf(Branding::value('name', 'RH'));
         $name = trim($name);
         if ($name === '') {
-            return 'RH';
+            return $fallback;
         }
 
         $parts = preg_split('/\s+/', $name) ?: [];
@@ -258,6 +260,21 @@ final class SupportWidget
             }
         }
 
-        return $initials !== '' ? $initials : 'RH';
+        return $initials !== '' ? $initials : $fallback;
+    }
+
+    /**
+     * Zwei Buchstaben aus einem Markennamen, für den leeren Support-Namen.
+     */
+    private static function initialsOf(string $brand): string
+    {
+        $letters = '';
+        foreach (preg_split('/\s+/', trim($brand)) ?: [] as $part) {
+            if ($part !== '') {
+                $letters .= mb_strtoupper(mb_substr($part, 0, 1));
+            }
+        }
+
+        return mb_substr($letters, 0, 2) ?: 'RH';
     }
 }

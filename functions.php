@@ -101,3 +101,26 @@ if (! function_exists('rhbp_update_settings')) {
         return update_option($optionName, array_merge($current, $values));
     }
 }
+
+if (! function_exists('rhbp_branding_active')) {
+    /**
+     * Ob ein White-Label-Branding aktiv ist. Für Module, die eigene Texte
+     * neutral halten wollen. Vor Core 2.9 fehlt die Funktion, darum dort
+     * mit function_exists prüfen.
+     */
+    function rhbp_branding_active(): bool
+    {
+        return \RhBlueprint\Core\Branding\Branding::isActive();
+    }
+}
+
+if (! function_exists('rhbp_brand')) {
+    /**
+     * Ein Branding-Wert (name|subtitle|author|author_uri|description_suffix|icon),
+     * oder `$fallback`, solange kein Branding aktiv oder der Wert leer ist.
+     */
+    function rhbp_brand(string $key, string $fallback = ''): string
+    {
+        return \RhBlueprint\Core\Branding\Branding::value($key, $fallback);
+    }
+}
